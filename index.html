@@ -1,10 +1,10 @@
-<!-- BP Generator UNIARA - Versão v5 (Sincronização Forçada) -->
+<!-- BP Generator UNIARA - Versão v6 (Correção Manual) -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator UNIARA v5</title>
+    <title>BP Generator UNIARA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -13,7 +13,7 @@
     <style>
         .form-section { display: none; }
         .form-section.active { display: block; }
-        .loading-overlay { background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+        .loading-overlay { background: rgba(255,255,255,0.9 ); backdrop-filter: blur(4px); position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
         .btn-primary { background-color: #1e3a8a; color: white; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 0.75rem; transition: all 0.2s; }
     </style>
 </head>
@@ -29,7 +29,7 @@
         <div class="container mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight">BP Generator UNIARA</h1>
-                <p class="text-xs opacity-80">Versão 5.0 - Sincronização em Nuvem</p>
+                <p class="text-xs opacity-80">Versão 6.0 - Sincronização em Nuvem</p>
             </div>
             <div id="userInfo" class="hidden flex items-center space-x-3">
                 <div class="text-right">
@@ -50,7 +50,6 @@
                 <h2 class="text-2xl font-bold text-gray-800">Portal UNIARA</h2>
                 <p class="text-gray-500 mt-2 text-sm">Acesse para colaboração em tempo real</p>
             </div>
-            <!-- O BOTÃO ABAIXO NÃO TEM ONCLICK INLINE -->
             <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="">
                 <span>Entrar com Google UNIARA</span>
@@ -75,7 +74,6 @@
     </main>
 
     <script>
-        // CREDENCIAIS UNIARA
         const CLIENT_ID = '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo';
         
@@ -87,12 +85,11 @@
         let gsiInited = false;
 
         const cloud = {
-            init: function() {
+            init: function( ) {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
                         gapiInited = true;
-                        console.log("V5: GAPI Pronto");
                     } catch (e) { console.error(e); }
                 });
                 tokenClient = google.accounts.oauth2.initTokenClient({
@@ -101,7 +98,6 @@
                     callback: '', 
                 });
                 gsiInited = true;
-                console.log("V5: GSI Pronto");
             },
             handleAuthClick: function() {
                 if (!gsiInited || !tokenClient) return alert('Aguarde o carregamento do Google...');
@@ -115,7 +111,7 @@
             },
             loadUserProfile: async function() {
                 const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
+                    headers: { Authorization: `Bearer ${gapi.client.getToken( ).access_token}` }
                 });
                 const user = await resp.json();
                 document.getElementById('userInfo').classList.remove('hidden');
@@ -169,17 +165,18 @@
             }
         };
 
-        // Inicialização limpa e moderna
         window.addEventListener('DOMContentLoaded', (event) => {
             cloud.init();
-            
             const loginBtn = document.getElementById('googleLoginBtn');
             if (loginBtn) {
                 loginBtn.addEventListener('click', () => {
-                    console.log("V5: Clique detectado");
                     cloud.handleAuthClick();
                 });
             }
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', auth.logout);
+            const refreshBtn = document.getElementById('refreshFilesBtn');
+            if (refreshBtn) refreshBtn.addEventListener('click', cloud.listDriveFiles);
         });
     </script>
 </body>
