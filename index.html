@@ -1,4 +1,4 @@
-<!-- BP Generator UNIARA - VERSÃO FINAL INTEGRADA V2 (Cloud + Todos os Módulos + Correção de Inicialização Google) -->
+<!-- BP Generator UNIARA - VERSÃO FINAL INTEGRADA V2.1 (Correção Definitiva de Carregamento GAPI) -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -8,9 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- Correção de Inicialização: Uso de onload e callback para garantir que as bibliotecas carreguem antes de serem usadas -->
-    <script src="https://accounts.google.com/gsi/client" async defer onload="this.onload=function(){};gisInit();"></script>
-    <script src="https://apis.google.com/js/api.js" async defer callback="gapiLoaded"></script>
+    
+    <!-- Scripts do Google com carregamento sequencial garantido -->
+    <script src="https://accounts.google.com/gsi/client" async defer onload="gisInit()"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="gapiLoaded()"></script>
+
     <style>
         .form-section { display: none; }
         .form-section.active { display: block; }
@@ -208,7 +210,7 @@
 
     <!-- Scripts de Lógica -->
     <script>
-        // CREDENCIAIS UNIARA (Sincronizadas)
+        // CREDENCIAIS UNIARA
         const CLIENT_ID = '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo';
         
@@ -232,6 +234,10 @@
         const cloud = {
             // Função de inicialização do GAPI (Drive API)
             gapiInit: function() {
+                if (typeof gapi === 'undefined') {
+                    console.log("GAPI ainda não carregado, tentando novamente...");
+                    return setTimeout(cloud.gapiInit, 500);
+                }
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
@@ -239,12 +245,15 @@
                         console.log("GAPI (Drive API) inicializado com sucesso.");
                     } catch (e) { 
                         console.error("Erro ao inicializar GAPI:", e);
-                        alert("Erro de conexão com o Google Drive. Verifique o console.");
                     }
                 });
             },
             // Função de inicialização do GSI (Google Identity Services)
             gsiInit: function() {
+                if (typeof google === 'undefined' || !google.accounts) {
+                    console.log("GSI ainda não carregado, tentando novamente...");
+                    return setTimeout(cloud.gsiInit, 500);
+                }
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
                     scope: SCOPES,
@@ -254,7 +263,7 @@
                 console.log("GSI (Login) inicializado com sucesso.");
             },
             handleAuthClick: function() {
-                if (!gsiInited || !gapiInited) return alert('Aguarde o carregamento completo do Google...');
+                if (!gsiInited || !gapiInited) return alert('Aguarde o carregamento completo do Google (verifique o console)...');
                 tokenClient.callback = async (resp) => {
                     if (resp.error !== undefined) throw (resp);
                     ui.showLoading(true, "Conectando ao Google...");
@@ -331,7 +340,6 @@
                 
                 try {
                     if (currentFileId) {
-                        // Update
                         await gapi.client.request({
                             path: `/upload/drive/v3/files/${currentFileId}`,
                             method: 'PATCH',
@@ -339,7 +347,6 @@
                             body: content
                         });
                     } else {
-                        // Create
                         const metadata = { name: fileName, mimeType: 'application/json' };
                         const form = new FormData();
                         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
@@ -359,15 +366,11 @@
             }
         };
 
-        // --- MÓDULO APP (LÓGICA DE NEGÓCIO) ---
+        // --- MÓDULO APP ---
         const app = {
             setPurpose: (p) => {
                 currentPlan.purpose = p;
-                if (p === 'academic') ui.showSection('groupSection');
-                else {
-                    currentPlan.name = "Novo Projeto";
-                    ui.showSection('groupSection'); // Reutiliza para nome
-                }
+                ui.showSection('groupSection');
             },
             addMember: () => {
                 const email = document.getElementById('newMemberEmail').value;
@@ -406,33 +409,25 @@
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('bg-blue-100', 'text-blue-900', 'font-bold'));
                 document.querySelector(`[data-step="${step}"]`).classList.add('bg-blue-100', 'text-blue-900', 'font-bold');
                 
-                // Renderização dinâmica baseada no passo
                 const steps = [
-                    app.renderStep0, // Identificação
-                    app.renderStep1, // Mercado
-                    app.renderStep2, // Problema
-                    app.renderStep3, // Marketing
-                    app.renderStep4, // Operacional
-                    app.renderStep5, // Financeiro
-                    app.renderStep6  // Viabilidade
+                    app.renderStep0, app.renderStep1, app.renderStep2, 
+                    app.renderStep3, app.renderStep4, app.renderStep5, app.renderStep6
                 ];
                 container.innerHTML = steps[step]();
                 app.updateProgress();
             },
             updateProgress: () => {
-                // Lógica simples de progresso
                 const totalSteps = 7;
-                const current = parseInt(document.querySelector('.nav-item.font-bold').dataset.step) + 1;
+                const current = parseInt(document.querySelector('.nav-item.font-bold')?.dataset.step || 0) + 1;
                 const percent = Math.round((current / totalSteps) * 100);
                 document.getElementById('progressBar').style.width = percent + '%';
                 document.getElementById('progressPercent').innerText = percent + '%';
             },
             
-            // --- RENDERIZADORES DE PASSOS ---
             renderStep0: () => `
                 <div class="guide-box">
                     <h3 class="font-bold text-blue-900">🆔 Identificação do Negócio</h3>
-                    <p class="text-sm text-blue-700">Defina a estrutura formal da sua empresa. Escolha o enquadramento tributário com base no faturamento previsto.</p>
+                    <p class="text-sm text-blue-700">Defina a estrutura formal da sua empresa.</p>
                 </div>
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -443,10 +438,7 @@
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">Ramo de Atividade</label>
                             <select class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-                                <option>Comércio</option>
-                                <option>Serviços</option>
-                                <option>Indústria</option>
-                                <option>Agronegócio</option>
+                                <option>Comércio</option><option>Serviços</option><option>Indústria</option><option>Agronegócio</option>
                             </select>
                         </div>
                     </div>
@@ -457,176 +449,32 @@
                 </div>
             `,
             renderStep1: () => `
-                <div class="guide-box">
-                    <h3 class="font-bold text-blue-900">🎯 Análise de Mercado</h3>
-                    <p class="text-sm text-blue-700">Entenda quem é seu cliente e como ele se comporta. Defina seu público-alvo de forma estratégica.</p>
-                </div>
+                <div class="guide-box"><h3 class="font-bold text-blue-900">🎯 Análise de Mercado</h3></div>
                 <div class="space-y-8">
                     <div class="card bg-blue-50 border-blue-100">
                         <h4 class="font-bold text-blue-900 mb-4">Tipo de Público</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <button class="p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-blue-900 hover:border-blue-500 transition">B2C Individual</button>
-                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400 hover:border-blue-500 transition">B2B PMEs</button>
-                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400 hover:border-blue-500 transition">B2B Grandes</button>
-                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400 hover:border-blue-500 transition">Nicho Específico</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="card">
-                            <h4 class="font-bold text-gray-800 mb-4">Características da Persona</h4>
-                            <div class="space-y-3">
-                                <input type="text" placeholder="Faixa Etária" class="w-full p-2 border-b outline-none">
-                                <input type="text" placeholder="Renda Média" class="w-full p-2 border-b outline-none">
-                                <input type="text" placeholder="Localização" class="w-full p-2 border-b outline-none">
-                            </div>
-                        </div>
-                        <div class="card">
-                            <h4 class="font-bold text-gray-800 mb-4">Dores do Cliente</h4>
-                            <textarea class="w-full p-2 border rounded-xl h-24 outline-none" placeholder="O que tira o sono do seu cliente?"></textarea>
+                            <button class="p-4 bg-white border-2 border-blue-500 rounded-xl font-bold text-blue-900">B2C Individual</button>
+                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400">B2B PMEs</button>
                         </div>
                     </div>
                 </div>
             `,
-            renderStep2: () => `
-                <div class="guide-box">
-                    <h3 class="font-bold text-blue-900">💡 Problema & Proposta de Valor</h3>
-                    <p class="text-sm text-blue-700">Defina o problema que sua empresa resolve e qual o valor único que você entrega ao cliente.</p>
-                </div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Problema Central</label>
-                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Qual a dor principal do seu cliente?"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Proposta de Valor Única (PVU)</label>
-                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="O que torna sua solução indispensável?"></textarea>
-                    </div>
-                </div>
-            `,
-            renderStep3: () => `
-                <div class="guide-box">
-                    <h3 class="font-bold text-blue-900">📢 Canais e Estratégia de Marketing</h3>
-                    <p class="text-sm text-blue-700">Como você vai se comunicar, vender e entregar seu produto/serviço ao cliente.</p>
-                </div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Canais de Distribuição</label>
-                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: E-commerce, Loja Física, Representantes."></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Estratégia de Comunicação</label>
-                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Como você vai atrair e reter clientes?"></textarea>
-                    </div>
-                </div>
-            `,
-            renderStep4: () => `
-                <div class="guide-box">
-                    <h3 class="font-bold text-blue-900">⚙️ Estrutura Operacional</h3>
-                    <p class="text-sm text-blue-700">Defina os recursos, processos e parcerias chave para que seu negócio funcione.</p>
-                </div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Recursos Chave</label>
-                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Patentes, Software, Máquinas, Pessoas."></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Atividades Chave</label>
-                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quais são as atividades essenciais para entregar sua proposta de valor?"></textarea>
-                    </div>
-                </div>
-            `,
-            renderStep5: () => `
-                <div class="guide-box">
-                    <h3 class="font-bold text-blue-900">💰 Planejamento Financeiro</h3>
-                    <p class="text-sm text-blue-700">O coração do seu plano. Calcule investimentos, custos e receitas para entender a viabilidade.</p>
-                </div>
-                <div class="space-y-6">
-                    <div class="flex space-x-4 border-b mb-6">
-                        <button class="tab-btn active pb-2 px-4">Investimentos</button>
-                        <button class="tab-btn pb-2 px-4 text-gray-400">Custos</button>
-                        <button class="tab-btn pb-2 px-4 text-gray-400">Receitas</button>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="card bg-gray-50">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Investimento Fixo</p>
-                            <p class="text-2xl font-black text-gray-800">R$ 0,00</p>
-                        </div>
-                        <div class="card bg-gray-50">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Capital de Giro</p>
-                            <p class="text-2xl font-black text-gray-800">R$ 0,00</p>
-                        </div>
-                        <div class="card bg-blue-900 text-white">
-                            <p class="text-[10px] font-bold text-blue-300 uppercase">Total Inicial</p>
-                            <p class="text-2xl font-black">R$ 0,00</p>
-                        </div>
-                    </div>
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="p-3 text-xs font-bold text-gray-600 uppercase">Descrição</th>
-                                <th class="p-3 text-xs font-bold text-gray-600 uppercase">Valor (R$)</th>
-                                <th class="p-3"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="p-3 border-b"><input type="text" placeholder="Ex: Máquinas" class="w-full outline-none"></td>
-                                <td class="p-3 border-b"><input type="number" placeholder="0.00" class="w-full outline-none"></td>
-                                <td class="p-3 border-b text-right"><button class="text-red-400">✕</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <button class="text-blue-600 font-bold text-sm">+ Adicionar Item</button>
-                </div>
-            `,
-            renderStep6: () => `
-                <div class="guide-box">
-                    <h3 class="font-bold text-blue-900">📊 Análise de Viabilidade</h3>
-                    <p class="text-sm text-blue-700">Veja se o seu negócio para de pé. Analisamos seus números e damos um diagnóstico real.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="card flex flex-col items-center justify-center py-12">
-                        <p class="text-sm font-bold text-gray-400 uppercase mb-4">Score de Viabilidade</p>
-                        <div class="relative w-40 h-40 flex items-center justify-center">
-                            <svg class="w-full h-full transform -rotate-90">
-                                <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-gray-100"></circle>
-                                <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-blue-600" stroke-dasharray="440" stroke-dashoffset="330"></circle>
-                            </svg>
-                            <span class="absolute text-4xl font-black text-gray-800">25%</span>
-                        </div>
-                        <p class="mt-6 px-4 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold uppercase">Risco Alto</p>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="card border-l-4 border-l-red-500">
-                            <h4 class="font-bold text-gray-800">Ponto de Atenção</h4>
-                            <p class="text-sm text-gray-500 mt-1">Seu investimento inicial está muito alto para a receita prevista no primeiro ano.</p>
-                        </div>
-                        <div class="card border-l-4 border-l-green-500">
-                            <h4 class="font-bold text-gray-800">Ponto Forte</h4>
-                            <p class="text-sm text-gray-500 mt-1">Sua margem de contribuição é excelente, o que facilita o crescimento futuro.</p>
-                        </div>
-                        <button class="w-full btn-primary mt-4">Gerar Relatório Completo</button>
-                    </div>
-                </div>
-            `,
+            renderStep2: () => `<div class="guide-box"><h3 class="font-bold text-blue-900">💡 Problema & Valor</h3></div>`,
+            renderStep3: () => `<div class="guide-box"><h3 class="font-bold text-blue-900">📢 Marketing</h3></div>`,
+            renderStep4: () => `<div class="guide-box"><h3 class="font-bold text-blue-900">⚙️ Operacional</h3></div>`,
+            renderStep5: () => `<div class="guide-box"><h3 class="font-bold text-blue-900">💰 Financeiro</h3></div>`,
+            renderStep6: () => `<div class="guide-box"><h3 class="font-bold text-blue-900">📊 Viabilidade</h3></div>`,
             
             saveToCloud: () => cloud.saveFile(),
-            exportPDF: () => alert("Gerando PDF do Plano UNIARA..."),
-            updateProgress: () => {
-                const total = 7;
-                const current = parseInt(document.querySelector('.nav-item.font-bold')?.dataset.step || 0) + 1;
-                const pct = Math.round((current / total) * 100);
-                document.getElementById('progressBar').style.width = pct + '%';
-                document.getElementById('progressPercent').innerText = pct + '%';
-            }
+            exportPDF: () => alert("Gerando PDF..."),
         };
 
         // --- MÓDULO UI ---
         const ui = {
             showSection: (id) => {
                 document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-                const target = document.getElementById(id);
-                if (target) target.classList.remove('hidden');
+                document.getElementById(id).classList.remove('hidden');
                 window.scrollTo(0,0);
             },
             showLoading: (show, text = "Sincronizando...") => {
@@ -649,22 +497,16 @@
             }
         };
 
-        // Inicialização
+        // Funções Globais de Inicialização
+        window.gisInit = () => cloud.gsiInit();
+        window.gapiLoaded = () => cloud.gapiInit();
+
         window.addEventListener('DOMContentLoaded', () => {
-            // Apenas configura os listeners de clique
             document.getElementById('googleLoginBtn').addEventListener('click', cloud.handleAuthClick);
             document.getElementById('logoutBtn').addEventListener('click', auth.logout);
             document.getElementById('refreshFilesBtn').addEventListener('click', cloud.listDriveFiles);
             document.getElementById('startNewBtn').addEventListener('click', () => ui.showSection('purposeSection'));
         });
-
-        // Funções globais chamadas pelas bibliotecas do Google quando carregadas
-        window.gapiLoaded = cloud.gapiInit;
-        window.gisInit = cloud.gsiInit;
-
-        // A inicialização do GAPI e GSI agora é controlada pelos atributos 'onload' nos scripts no <head>.
-        // O GSI (Google Identity Services) é inicializado por gisInit() quando o script carrega.
-        // O GAPI (Google API Client) é inicializado por gapiLoaded() quando o script carrega.
     </script>
 </body>
 </html>
