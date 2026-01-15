@@ -8,12 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <script src="https://accounts.google.com/gsi/client" async defer onload="this.onload=function(){};gisInit();"></script>
-    <script src="https://apis.google.com/js/api.js" async defer callback="gapiLoaded"></script>
 
     <style>
-        /* Estilos Personalizados */
         .loading-overlay { 
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(4px); 
@@ -27,13 +23,7 @@
             border-radius: 0 0.5rem 0.5rem 0; 
             margin-bottom: 1.5rem; 
         }
-        .btn-primary { 
-            background-color: #1e3a8a; color: white; 
-            font-weight: bold; padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem; transition: all 0.2s; 
-        }
-        .btn-primary:hover { background-color: #1e40af; transform: translateY(-1px); }
-        .nav-item { cursor: pointer; transition: background-color 0.2s; }
+        .nav-item { cursor: pointer; transition: all 0.2s; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -56,473 +46,256 @@
                 </div>
             </div>
             <div id="userInfo" class="hidden flex items-center space-x-3">
-                <div class="text-right hidden sm:block">
-                    <p class="text-xs font-medium" id="displayUserName"></p>
-                    <p class="text-[9px] text-green-400 uppercase font-bold">Conectado</p>
-                </div>
-                <img id="userPhoto" class="h-9 w-9 rounded-full border-2 border-white/20" src="" alt="">
-                <button id="logoutBtn" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition" title="Sair">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                </button>
+                <span id="displayUserName" class="text-sm font-medium hidden sm:block"></span>
+                <img id="userPhoto" class="h-8 w-8 rounded-full border border-white" src="" alt="">
+                <button id="logoutBtn" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-1 rounded ml-2">Sair</button>
             </div>
         </div>
     </header>
 
     <main class="container mx-auto py-6 px-4">
         
-        <section id="loginSection" class="max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 text-center">
-            <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span class="text-4xl">🎓</span>
-            </div>
+        <section id="loginSection" class="max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-xl text-center">
+            <div class="text-5xl mb-4">🎓</div>
             <h2 class="text-2xl font-bold text-gray-800">Acesso ao Sistema</h2>
-            <p class="text-gray-500 mt-2 mb-8">Faça login com sua conta Google para acessar seus planos.</p>
-            <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300 shadow-sm">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="">
+            <p class="text-gray-500 mt-2 mb-8">Faça login para gerenciar seus planos.</p>
+            
+            <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-700 font-bold py-3 rounded-xl transition-all shadow-sm">
+                <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                 <span>Entrar com Google</span>
             </button>
+            <p id="statusMsg" class="text-xs text-gray-400 mt-4">Aguardando bibliotecas do Google...</p>
         </section>
 
-        <section id="fileListSection" class="max-w-4xl mx-auto hidden">
-            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">Meus Planos de Negócio</h2>
-                    <button id="startNewBtn" class="btn-primary"> + Novo Plano </button>
-                </div>
-                <div id="driveFilesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2">
-                    </div>
-                <div class="mt-8 pt-6 border-t flex justify-center">
-                    <button id="refreshFilesBtn" class="text-blue-600 font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition">Atualizar Lista</button>
-                </div>
+        <section id="fileListSection" class="hidden max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Meus Projetos</h2>
+                <button onclick="ui.showSection('purposeSection')" class="bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">+ Novo</button>
+            </div>
+            <div id="driveFilesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <button id="refreshFilesBtn" class="mt-4 text-blue-600 text-sm font-bold mx-auto block">Atualizar Lista</button>
+        </section>
+
+        <section id="purposeSection" class="hidden max-w-4xl mx-auto text-center">
+            <h2 class="text-2xl font-bold mb-8">Objetivo do Plano</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div onclick="app.setPurpose('academic')" class="bg-white p-6 rounded-xl shadow cursor-pointer hover:ring-2 ring-blue-500"><div class="text-3xl">📚</div><h3 class="font-bold">Acadêmico</h3></div>
+                <div onclick="app.setPurpose('business')" class="bg-white p-6 rounded-xl shadow cursor-pointer hover:ring-2 ring-blue-500"><div class="text-3xl">🚀</div><h3 class="font-bold">Negócio</h3></div>
+                <div onclick="app.setPurpose('analysis')" class="bg-white p-6 rounded-xl shadow cursor-pointer hover:ring-2 ring-blue-500"><div class="text-3xl">🔍</div><h3 class="font-bold">Análise</h3></div>
             </div>
         </section>
 
-        <section id="purposeSection" class="max-w-4xl mx-auto hidden">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold text-gray-800">Qual o objetivo do plano?</h2>
+        <section id="groupSection" class="hidden max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
+            <h2 class="text-xl font-bold mb-4">Dados Iniciais</h2>
+            <input type="text" id="projectNameInput" class="w-full p-3 border rounded mb-4" placeholder="Nome do Projeto">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold mb-1">Equipe</label>
+                <div class="flex gap-2">
+                    <input type="email" id="newMemberEmail" class="flex-1 p-2 border rounded" placeholder="Email do integrante">
+                    <button onclick="app.addMember()" class="bg-gray-200 px-4 rounded">Add</button>
+                </div>
+                <div id="membersList" class="mt-2 text-sm text-gray-600"></div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div onclick="app.setPurpose('academic')" class="card bg-white p-6 rounded-xl shadow cursor-pointer hover:border-blue-500 border-2 border-transparent transition text-center">
-                    <div class="text-4xl mb-4">📚</div>
-                    <h3 class="font-bold text-lg">Trabalho Acadêmico</h3>
-                </div>
-                <div onclick="app.setPurpose('business')" class="card bg-white p-6 rounded-xl shadow cursor-pointer hover:border-blue-500 border-2 border-transparent transition text-center">
-                    <div class="text-4xl mb-4">🚀</div>
-                    <h3 class="font-bold text-lg">Empreendimento</h3>
-                </div>
-                <div onclick="app.setPurpose('analysis')" class="card bg-white p-6 rounded-xl shadow cursor-pointer hover:border-blue-500 border-2 border-transparent transition text-center">
-                    <div class="text-4xl mb-4">🔍</div>
-                    <h3 class="font-bold text-lg">Estudo de Caso</h3>
-                </div>
-            </div>
-        </section>
 
-        <section id="groupSection" class="max-w-2xl mx-auto hidden">
-            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Novo Projeto</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Projeto</label>
-                        <input type="text" id="projectNameInput" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Hamburgueria Artesanal">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Integrantes do Grupo</label>
-                        <div id="membersList" class="space-y-2 mb-3"></div>
-                        <div class="flex gap-2">
-                            <input type="email" id="newMemberEmail" class="flex-1 p-3 border rounded-xl outline-none" placeholder="E-mail do colega">
-                            <button onclick="app.addMember()" class="bg-gray-100 hover:bg-gray-200 px-4 rounded-xl font-bold text-gray-600">Adicionar</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-10 flex justify-between">
-                    <button onclick="ui.showSection('purposeSection')" class="text-gray-500 font-bold">Voltar</button>
-                    <button onclick="app.createProject()" class="btn-primary">Criar e Começar</button>
-                </div>
+            <div class="flex justify-between mt-6">
+                <button onclick="ui.showSection('purposeSection')" class="text-gray-500">Voltar</button>
+                <button onclick="app.createProject()" class="bg-blue-900 text-white px-6 py-2 rounded font-bold">Criar Plano</button>
             </div>
         </section>
 
-        <section id="editorSection" class="hidden">
-            <div class="flex flex-col lg:flex-row gap-6">
-                <aside class="lg:w-64 space-y-2">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border mb-4">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase">Progresso</span>
-                        <div class="flex items-center justify-between">
-                            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-1 mr-2">
-                                <div id="progressBar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
-                            </div>
-                            <span id="progressPercent" class="text-xs font-bold text-blue-600">0%</span>
-                        </div>
-                    </div>
-                    <nav id="mainNav" class="space-y-1">
-                        <button onclick="app.goToStep(0)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="0"><span>🆔</span> Identificação</button>
-                        <button onclick="app.goToStep(1)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="1"><span>🎯</span> Mercado</button>
-                        <button onclick="app.goToStep(2)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="2"><span>💡</span> Solução</button>
-                        <button onclick="app.goToStep(3)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="3"><span>📢</span> Marketing</button>
-                        <button onclick="app.goToStep(4)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="4"><span>⚙️</span> Operacional</button>
-                        <button onclick="app.goToStep(5)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="5"><span>💰</span> Financeiro</button>
-                        <button onclick="app.goToStep(6)" class="nav-item w-full text-left p-3 rounded-xl font-medium hover:bg-blue-50 flex gap-2" data-step="6"><span>📊</span> Resumo</button>
-                    </nav>
-                    <div class="pt-6 space-y-2">
-                        <button onclick="app.saveToCloud()" class="w-full bg-green-600 text-white p-3 rounded-xl font-bold hover:bg-green-700 flex justify-center items-center gap-2 transition">
-                            <span>💾</span> Salvar Drive
-                        </button>
-                        <button onclick="app.exportPDF()" class="w-full bg-gray-800 text-white p-3 rounded-xl font-bold hover:bg-black flex justify-center items-center gap-2 transition">
-                            <span>📄</span> Gerar PDF
-                        </button>
-                    </div>
-                </aside>
+        <section id="editorSection" class="hidden flex flex-col lg:flex-row gap-6">
+            <aside class="lg:w-64 space-y-2">
+                <nav id="mainNav" class="space-y-1">
+                    <button onclick="app.goToStep(0)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="0">1. Identificação</button>
+                    <button onclick="app.goToStep(1)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="1">2. Mercado</button>
+                    <button onclick="app.goToStep(2)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="2">3. Solução</button>
+                    <button onclick="app.goToStep(3)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="3">4. Marketing</button>
+                    <button onclick="app.goToStep(4)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="4">5. Operacional</button>
+                    <button onclick="app.goToStep(5)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="5">6. Financeiro</button>
+                    <button onclick="app.goToStep(6)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="6">7. Resumo</button>
+                </nav>
+                <hr class="my-4">
+                <button onclick="app.saveToCloud()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">💾 Salvar</button>
+                <button onclick="app.exportPDF()" class="w-full bg-gray-700 text-white p-2 rounded hover:bg-gray-800">📄 PDF</button>
+            </aside>
 
-                <div class="flex-1 bg-white rounded-3xl shadow-xl border border-gray-100 min-h-[600px]">
-                    <div id="stepContent" class="p-8">
-                        </div>
-                </div>
+            <div class="flex-1 bg-white rounded-xl shadow p-8 min-h-[500px]">
+                <div id="stepContent"></div>
             </div>
         </section>
     </main>
 
     <script>
-        // === CONFIGURAÇÕES GLOBAIS ===
+        // --- CONFIGURAÇÕES ---
         const CLIENT_ID = '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo';
-        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]; // URL CORRIGIDA
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
         const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
 
-        // === ESTADO DA APLICAÇÃO ===
+        // Variáveis Globais
         let tokenClient;
         let gapiInited = false;
         let gsiInited = false;
         let currentFileId = null;
-        let currentPlan = { 
-            id: null, 
-            purpose: '', 
-            name: '', 
-            members: [], 
-            data: {}, // Aqui ficam os textos digitados
-            lastUpdate: null 
-        };
+        let currentPlan = { id: null, purpose: '', name: '', members: [], data: {} };
 
-        // === FUNÇÕES DE NUVEM (GOOGLE DRIVE) ===
+        // --- SISTEMA DE NUVEM ---
         const cloud = {
-            // 1. Carrega API do Google Drive
+            // Chamado quando o script do GAPI terminar de carregar
             gapiInit: function() {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
                         gapiInited = true;
-                        console.log("✅ GAPI Inicializado");
-                    } catch (e) { 
-                        console.error("Erro GAPI:", e);
-                        alert("Erro de conexão com Google. Verifique o console (F12).");
-                    }
+                        cloud.checkAuthStatus();
+                    } catch (e) { console.error("Erro GAPI", e); alert("Erro ao conectar Google Drive."); }
                 });
             },
-            // 2. Carrega API de Login
+            // Chamado quando o script do GSI terminar de carregar
             gsiInit: function() {
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID, scope: SCOPES, callback: '',
                 });
                 gsiInited = true;
-                console.log("✅ GSI Inicializado");
+                cloud.checkAuthStatus();
             },
-            // 3. Botão de Login
-            handleAuthClick: function() {
-                if (!gsiInited || !gapiInited) return alert('Carregando sistema... Tente em 5 segundos.');
+            checkAuthStatus: function() {
+                if(gapiInited && gsiInited) {
+                    document.getElementById('statusMsg').innerText = "Sistema pronto. Clique para entrar.";
+                    document.getElementById('statusMsg').classList.add('text-green-600');
+                    document.getElementById('googleLoginBtn').disabled = false;
+                }
+            },
+            login: function() {
+                if(!gapiInited || !gsiInited) return alert("Aguarde, carregando sistema...");
                 tokenClient.callback = async (resp) => {
                     if (resp.error) throw resp;
                     ui.showLoading(true, "Entrando...");
-                    await cloud.loadUserProfile();
+                    await cloud.loadUser();
+                    await cloud.listFiles();
                     ui.showSection('fileListSection');
-                    await cloud.listDriveFiles();
                     ui.showLoading(false);
                 };
                 tokenClient.requestAccessToken({prompt: 'consent'});
             },
-            // 4. Carrega Foto do Usuário
-            loadUserProfile: async function() {
-                try {
-                    const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                        headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
-                    });
-                    const user = await resp.json();
-                    document.getElementById('userInfo').classList.remove('hidden');
-                    document.getElementById('userPhoto').src = user.picture;
-                    document.getElementById('displayUserName').innerText = user.name;
-                } catch(e) { console.error("Erro perfil", e); }
+            loadUser: async function() {
+                const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
+                });
+                const user = await resp.json();
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('displayUserName').innerText = user.name;
+                document.getElementById('userPhoto').src = user.picture;
             },
-            // 5. Lista Arquivos no Drive
-            listDriveFiles: async function() {
+            listFiles: async function() {
                 const container = document.getElementById('driveFilesContainer');
-                container.innerHTML = '<p class="text-center p-4">Buscando planos...</p>';
+                container.innerHTML = '<p>Carregando...</p>';
                 try {
-                    const response = await gapi.client.drive.files.list({
-                        'pageSize': 20,
-                        'fields': "files(id, name, modifiedTime)",
-                        'q': "name contains 'UNIARA_BP_' and mimeType = 'application/json' and trashed = false"
+                    const res = await gapi.client.drive.files.list({
+                        'pageSize': 20, 'fields': "files(id, name)",
+                        'q': "name contains 'UNIARA_BP_' and trashed = false"
                     });
-                    const files = response.result.files;
                     container.innerHTML = '';
-                    if (files && files.length > 0) {
-                        files.forEach(file => {
+                    if(res.result.files.length > 0) {
+                        res.result.files.forEach(file => {
                             const div = document.createElement('div');
-                            div.className = "card bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 border transition flex justify-between items-center";
-                            div.innerHTML = `
-                                <div>
-                                    <strong class="text-blue-900">${file.name.replace('UNIARA_BP_', '')}</strong>
-                                    <br><small class="text-gray-500">Modificado: ${new Date(file.modifiedTime).toLocaleDateString()}</small>
-                                </div>
-                                <span class="text-2xl">📂</span>`;
+                            div.className = "bg-gray-50 p-4 rounded border hover:bg-blue-50 cursor-pointer flex justify-between";
+                            div.innerHTML = `<b>${file.name.replace('UNIARA_BP_', '')}</b> <span>📂</span>`;
                             div.onclick = () => cloud.loadFile(file.id);
                             container.appendChild(div);
                         });
-                    } else {
-                        container.innerHTML = '<div class="col-span-full text-center text-gray-400 py-8">Nenhum plano encontrado.<br>Crie um novo!</div>';
-                    }
-                } catch (err) { console.error(err); }
+                    } else { container.innerHTML = '<p>Nenhum plano encontrado.</p>'; }
+                } catch(e) { console.error(e); }
             },
-            // 6. Abre um Arquivo
-            loadFile: async function(fileId) {
-                ui.showLoading(true, "Abrindo plano...");
+            loadFile: async function(id) {
+                ui.showLoading(true, "Abrindo...");
                 try {
-                    const response = await gapi.client.drive.files.get({ fileId: fileId, alt: 'media' });
-                    currentPlan = response.result;
-                    currentFileId = fileId;
+                    const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
+                    currentPlan = res.result;
+                    currentFileId = id;
                     ui.showSection('editorSection');
                     app.goToStep(0);
-                } catch (e) { alert("Erro ao abrir arquivo. Tente novamente."); }
+                } catch(e) { alert("Erro ao abrir."); }
                 ui.showLoading(false);
             },
-            // 7. Salva o Arquivo
             saveFile: async function() {
                 ui.showLoading(true, "Salvando...");
-                const fileName = `UNIARA_BP_${currentPlan.name}.json`;
-                // Garante que o objeto data existe
-                if(!currentPlan.data) currentPlan.data = {};
-                
+                const name = `UNIARA_BP_${currentPlan.name}.json`;
                 const content = JSON.stringify(currentPlan);
-                try {
-                    const metadata = { name: fileName, mimeType: 'application/json' };
-                    const form = new FormData();
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', new Blob([content], { type: 'application/json' }));
-                    
-                    const url = currentFileId 
-                        ? `https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=multipart`
-                        : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-                    
-                    const method = currentFileId ? 'PATCH' : 'POST';
+                const metadata = { name: name, mimeType: 'application/json' };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([content], { type: 'application/json' }));
+                
+                const url = currentFileId 
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=multipart`
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+                const method = currentFileId ? 'PATCH' : 'POST';
 
+                try {
                     await fetch(url, {
                         method: method,
                         headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
                         body: form
                     });
-                    
-                    // Se for arquivo novo, atualiza a lista para pegar o ID na próxima vez
-                    if(!currentFileId) { await cloud.listDriveFiles(); } 
-                    
-                    alert("✅ Plano salvo com sucesso!");
-                } catch (e) { alert("Erro ao salvar: " + e.message); }
+                    if(!currentFileId) await cloud.listFiles();
+                    alert("Salvo!");
+                } catch(e) { alert("Erro ao salvar."); }
                 ui.showLoading(false);
             }
         };
 
-        // === LÓGICA DO APP ===
+        // --- SISTEMA DO APP ---
         const app = {
-            setPurpose: (p) => {
-                currentPlan.purpose = p;
-                ui.showSection('groupSection');
-            },
+            setPurpose: (p) => { currentPlan.purpose = p; ui.showSection('groupSection'); },
             addMember: () => {
-                const email = document.getElementById('newMemberEmail').value;
-                if (email) {
-                    currentPlan.members.push({ name: email.split('@')[0], email: email });
-                    app.renderMembers();
-                    document.getElementById('newMemberEmail').value = '';
+                const el = document.getElementById('newMemberEmail');
+                if(el.value) {
+                    currentPlan.members.push({ email: el.value });
+                    document.getElementById('membersList').innerHTML += `<div>${el.value}</div>`;
+                    el.value = '';
                 }
-            },
-            renderMembers: () => {
-                document.getElementById('membersList').innerHTML = currentPlan.members.map(m => 
-                    `<div class="flex justify-between bg-gray-50 p-2 rounded text-sm items-center">
-                        <span>${m.email}</span>
-                        <span class="text-green-600 text-xs font-bold">Adicionado</span>
-                    </div>`
-                ).join('');
             },
             createProject: () => {
                 const name = document.getElementById('projectNameInput').value;
-                if(!name) return alert("Por favor, dê um nome ao projeto!");
+                if(!name) return alert("Digite um nome!");
                 currentPlan.name = name;
-                currentPlan.data = {}; // Reinicia dados
-                
-                // Salva o arquivo vazio primeiro para criar o ID no Drive
-                cloud.saveFile().then(() => {
-                    ui.showSection('editorSection');
-                    app.goToStep(0);
-                });
+                currentPlan.data = {};
+                cloud.saveFile().then(() => { ui.showSection('editorSection'); app.goToStep(0); });
             },
-            // Atualiza o objeto currentPlan sempre que o usuário digita
-            updateField: (field, value) => {
+            updateField: (field, val) => {
                 if(!currentPlan.data) currentPlan.data = {};
-                currentPlan.data[field] = value;
+                currentPlan.data[field] = val;
             },
-            // Navegação entre passos
             goToStep: (step) => {
-                // Atualiza menu lateral
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('bg-blue-100', 'font-bold', 'text-blue-900'));
+                // Atualiza abas
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('bg-blue-100', 'font-bold'));
                 const btn = document.querySelector(`[data-step="${step}"]`);
-                if(btn) btn.classList.add('bg-blue-100', 'font-bold', 'text-blue-900');
+                if(btn) btn.classList.add('bg-blue-100', 'font-bold');
 
-                // Chama a função de renderização correta
-                const renderFunctions = [
-                    app.renderStep0, app.renderStep1, app.renderStep2, 
-                    app.renderStep3, app.renderStep4, app.renderStep5, app.renderStep6
-                ];
-                
-                const contentDiv = document.getElementById('stepContent');
-                contentDiv.innerHTML = renderFunctions[step] ? renderFunctions[step]() : '<p>Erro: Passo não encontrado.</p>';
-                
-                app.updateProgress(step);
+                // Renderiza HTML
+                const content = document.getElementById('stepContent');
+                if(step === 0) content.innerHTML = app.renderField('Identificação', 'Nome Fantasia', 'businessName') + app.renderText('Missão', 'mission');
+                else if(step === 1) content.innerHTML = app.renderText('Público Alvo', 'targetAudience') + app.renderText('Concorrentes', 'competitors');
+                else if(step === 2) content.innerHTML = app.renderText('Problema', 'problem') + app.renderText('Solução', 'solution');
+                else if(step === 3) content.innerHTML = app.renderField('Canais', 'Canais de Venda', 'channels') + app.renderText('Promoção', 'promotion');
+                else if(step === 4) content.innerHTML = app.renderText('Localização', 'location') + app.renderText('Equipe', 'team');
+                else if(step === 5) content.innerHTML = app.renderField('Financeiro', 'Investimento R$', 'investment', 'number') + app.renderField('Financeiro', 'Faturamento R$', 'revenue', 'number');
+                else content.innerHTML = '<div class="p-4 bg-gray-100 text-center">Resumo Final disponível para exportação em PDF.</div>';
             },
-            updateProgress: (step) => {
-                const pct = Math.round(((step + 1) / 7) * 100);
-                document.getElementById('progressBar').style.width = pct + '%';
-                document.getElementById('progressPercent').innerText = pct + '%';
-            },
-
-            // === CONTEÚDO DOS FORMULÁRIOS (HTML Injetado) ===
-            renderStep0: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">🆔 Identificação do Negócio</h3><p class="text-sm">Defina a identidade básica da empresa.</p></div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Nome Fantasia</label>
-                        <input type="text" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                               onchange="app.updateField('businessName', this.value)" 
-                               value="${currentPlan.data?.businessName || ''}" placeholder="Nome comercial da empresa">
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Missão</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" 
-                                  onchange="app.updateField('mission', this.value)" 
-                                  placeholder="Qual o propósito da existência da empresa?">${currentPlan.data?.mission || ''}</textarea>
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Visão</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" 
-                                  onchange="app.updateField('vision', this.value)" 
-                                  placeholder="Onde a empresa quer chegar no futuro?">${currentPlan.data?.vision || ''}</textarea>
-                    </div>
-                </div>`,
-
-            renderStep1: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">🎯 Análise de Mercado</h3><p class="text-sm">Entenda quem compra e quem compete com você.</p></div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Público Alvo</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" 
-                                  onchange="app.updateField('targetAudience', this.value)" 
-                                  placeholder="Descreva o perfil do seu cliente ideal (idade, localização, interesses)...">${currentPlan.data?.targetAudience || ''}</textarea>
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Análise de Concorrentes</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" 
-                                  onchange="app.updateField('competitors', this.value)" 
-                                  placeholder="Quem são seus concorrentes diretos e indiretos? Pontos fortes e fracos deles.">${currentPlan.data?.competitors || ''}</textarea>
-                    </div>
-                </div>`,
-
-            renderStep2: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">💡 O Problema e a Solução</h3><p class="text-sm">Qual dor do cliente você resolve?</p></div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">O Problema</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" 
-                                  onchange="app.updateField('problem', this.value)" 
-                                  placeholder="Qual a dificuldade ou necessidade que o cliente enfrenta hoje?">${currentPlan.data?.problem || ''}</textarea>
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">A Solução (Proposta de Valor)</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" 
-                                  onchange="app.updateField('solution', this.value)" 
-                                  placeholder="Como seu produto resolve isso de forma melhor que os outros?">${currentPlan.data?.solution || ''}</textarea>
-                    </div>
-                </div>`,
-
-            renderStep3: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">📢 Plano de Marketing</h3><p class="text-sm">Estratégias para atrair e manter clientes.</p></div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Canais de Venda e Divulgação</label>
-                        <input type="text" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                               onchange="app.updateField('channels', this.value)" 
-                               value="${currentPlan.data?.channels || ''}" placeholder="Ex: Instagram, Site Próprio, Loja Física...">
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Estratégia de Promoção</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-32" 
-                                  onchange="app.updateField('promotion', this.value)" 
-                                  placeholder="Como você fará as pessoas conhecerem sua marca?">${currentPlan.data?.promotion || ''}</textarea>
-                    </div>
-                </div>`,
-
-            renderStep4: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">⚙️ Plano Operacional</h3><p class="text-sm">Estrutura necessária para funcionar.</p></div>
-                <div class="space-y-6">
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Localização e Infraestrutura</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" 
-                                  onchange="app.updateField('location', this.value)" 
-                                  placeholder="Onde será o negócio? O que precisa de reforma ou móveis?">${currentPlan.data?.location || ''}</textarea>
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Equipe e Cargos</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" 
-                                  onchange="app.updateField('team', this.value)" 
-                                  placeholder="Quantas pessoas? Quais funções?">${currentPlan.data?.team || ''}</textarea>
-                    </div>
-                </div>`,
-
-            renderStep5: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">💰 Plano Financeiro</h3><p class="text-sm">Estimativas de custos e ganhos.</p></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Investimento Inicial (R$)</label>
-                        <input type="number" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                               onchange="app.updateField('investment', this.value)" 
-                               value="${currentPlan.data?.investment || ''}" placeholder="0,00">
-                    </div>
-                    <div>
-                        <label class="block font-bold mb-1 text-gray-700">Previsão de Faturamento Mensal (R$)</label>
-                        <input type="number" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-                               onchange="app.updateField('revenue', this.value)" 
-                               value="${currentPlan.data?.revenue || ''}" placeholder="0,00">
-                    </div>
-                    <div class="col-span-full">
-                        <label class="block font-bold mb-1 text-gray-700">Custos Fixos Mensais (Estimativa)</label>
-                        <textarea class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24" 
-                                  onchange="app.updateField('costs', this.value)" 
-                                  placeholder="Aluguel, Internet, Salários...">${currentPlan.data?.costs || ''}</textarea>
-                    </div>
-                </div>`,
-
-            renderStep6: () => `
-                <div class="guide-box"><h3 class="font-bold text-blue-900">📊 Resumo e Viabilidade</h3><p class="text-sm">Visão geral do plano.</p></div>
-                <div class="bg-gray-100 p-6 rounded-lg text-center border border-gray-200">
-                    <h4 class="text-xl font-bold mb-2 text-gray-700">Plano Pronto para Revisão</h4>
-                    <p class="mb-4 text-gray-600">Utilize o botão "Gerar PDF" no menu lateral para baixar o documento completo.</p>
-                    <div class="text-sm text-gray-500">Certifique-se de ter salvo todas as alterações no Drive antes de exportar.</div>
-                </div>`,
-
+            renderField: (title, label, field, type='text') => `
+                <div class="mb-4"><h3 class="font-bold text-blue-900 mb-2">${title}</h3>
+                <label class="block text-sm font-bold mb-1">${label}</label>
+                <input type="${type}" class="w-full p-2 border rounded" value="${currentPlan.data?.[field] || ''}" onchange="app.updateField('${field}', this.value)"></div>`,
+            renderText: (label, field) => `
+                <div class="mb-4"><label class="block text-sm font-bold mb-1">${label}</label>
+                <textarea class="w-full p-2 border rounded h-24" onchange="app.updateField('${field}', this.value)">${currentPlan.data?.[field] || ''}</textarea></div>`,
+            
             saveToCloud: () => cloud.saveFile(),
             exportPDF: () => {
-                const element = document.getElementById('stepContent');
-                // Opções para melhorar o PDF
-                const opt = {
-                    margin: 1,
-                    filename: `Plano_${currentPlan.name}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                };
-                html2pdf().set(opt).from(element).save();
+                const el = document.getElementById('stepContent');
+                html2pdf().from(el).save(`Plano_${currentPlan.name}.pdf`);
             }
         };
 
@@ -531,36 +304,31 @@
                 document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
                 document.getElementById(id).classList.remove('hidden');
             },
-            showLoading: (show, text) => {
+            showLoading: (show, txt) => {
                 const el = document.getElementById('loadingOverlay');
-                document.getElementById('loadingText').innerText = text;
-                show ? el.classList.remove('hidden') : el.classList.add('hidden');
+                if(show) { el.classList.remove('hidden'); document.getElementById('loadingText').innerText = txt; }
+                else el.classList.add('hidden');
             }
         };
 
         const auth = {
             logout: () => {
                 const token = gapi.client.getToken();
-                if (token) {
-                    google.accounts.oauth2.revoke(token.access_token);
-                    gapi.client.setToken(null);
-                    ui.showSection('loginSection');
-                    document.getElementById('userInfo').classList.add('hidden');
-                }
+                if (token) google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken(null);
+                ui.showSection('loginSection');
+                document.getElementById('userInfo').classList.add('hidden');
             }
         };
 
-        // Hooks Globais para Inicialização do Google
-        window.gapiLoaded = cloud.gapiInit;
-        window.gisInit = cloud.gsiInit;
-
-        // Listeners de Eventos (DOM Ready)
-        window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('googleLoginBtn').addEventListener('click', cloud.handleAuthClick);
-            document.getElementById('logoutBtn').addEventListener('click', auth.logout);
-            document.getElementById('refreshFilesBtn').addEventListener('click', cloud.listDriveFiles);
-            document.getElementById('startNewBtn').addEventListener('click', () => ui.showSection('purposeSection'));
-        });
+        // Listeners de Botões
+        document.getElementById('googleLoginBtn').addEventListener('click', cloud.login);
+        document.getElementById('refreshFilesBtn').addEventListener('click', cloud.listFiles);
+        document.getElementById('logoutBtn').addEventListener('click', auth.logout);
     </script>
+
+    <script src="https://accounts.google.com/gsi/client" async defer onload="cloud.gsiInit()"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="cloud.gapiInit()"></script>
+
 </body>
 </html>
