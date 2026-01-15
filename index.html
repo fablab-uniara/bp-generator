@@ -1,10 +1,10 @@
-<!-- BP Generator UNIARA - Versão v4 Final -->
+<!-- BP Generator UNIARA - Versão v5 (Sincronização Forçada) -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator - UNIARA</title>
+    <title>BP Generator UNIARA v5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -28,8 +28,8 @@
     <header class="bg-blue-900 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">BP Generator</h1>
-                <p class="text-xs opacity-80">UNIARA - Gestão de Planos de Negócios</p>
+                <h1 class="text-2xl font-bold tracking-tight">BP Generator UNIARA</h1>
+                <p class="text-xs opacity-80">Versão 5.0 - Sincronização em Nuvem</p>
             </div>
             <div id="userInfo" class="hidden flex items-center space-x-3">
                 <div class="text-right">
@@ -50,7 +50,7 @@
                 <h2 class="text-2xl font-bold text-gray-800">Portal UNIARA</h2>
                 <p class="text-gray-500 mt-2 text-sm">Acesse para colaboração em tempo real</p>
             </div>
-            <!-- REMOVIDO ONCLICK INLINE PARA EVITAR ERRO DE REFERÊNCIA -->
+            <!-- O BOTÃO ABAIXO NÃO TEM ONCLICK INLINE -->
             <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="">
                 <span>Entrar com Google UNIARA</span>
@@ -86,13 +86,13 @@
         let gapiInited = false;
         let gsiInited = false;
 
-        // Funções globais para evitar erros de escopo
         const cloud = {
             init: function() {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
                         gapiInited = true;
+                        console.log("V5: GAPI Pronto");
                     } catch (e) { console.error(e); }
                 });
                 tokenClient = google.accounts.oauth2.initTokenClient({
@@ -101,9 +101,10 @@
                     callback: '', 
                 });
                 gsiInited = true;
+                console.log("V5: GSI Pronto");
             },
             handleAuthClick: function() {
-                if (!gsiInited) return alert('Carregando Google...');
+                if (!gsiInited || !tokenClient) return alert('Aguarde o carregamento do Google...');
                 tokenClient.callback = async (resp) => {
                     if (resp.error !== undefined) throw (resp);
                     await cloud.loadUserProfile();
@@ -168,19 +169,17 @@
             }
         };
 
-        // Inicialização via Event Listeners (Mais seguro)
-        window.addEventListener('load', function() {
+        // Inicialização limpa e moderna
+        window.addEventListener('DOMContentLoaded', (event) => {
             cloud.init();
             
-            // Atribuição de eventos via ID
             const loginBtn = document.getElementById('googleLoginBtn');
-            if (loginBtn) loginBtn.addEventListener('click', cloud.handleAuthClick);
-            
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) logoutBtn.addEventListener('click', auth.logout);
-            
-            const refreshBtn = document.getElementById('refreshFilesBtn');
-            if (refreshBtn) refreshBtn.addEventListener('click', cloud.listDriveFiles);
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    console.log("V5: Clique detectado");
+                    cloud.handleAuthClick();
+                });
+            }
         });
     </script>
 </body>
