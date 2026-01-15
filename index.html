@@ -1,0 +1,135 @@
+<!-- Versão UNIARA Cloud Direct: Sem dependência de Picker API -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BP Generator - UNIARA Direct Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .guide-box { border-left: 4px solid #1e3a8a; background-color: #f0f9ff; }
+        .loading-overlay { background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); }
+        .btn-primary { background-color: #1e3a8a; color: white; font-weight: bold; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #1e40af; transform: translateY(-1px); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 z-[100] flex items-center justify-center hidden loading-overlay">
+        <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent"></div>
+            <p class="mt-4 text-blue-900 font-bold" id="loadingText">Sincronizando com UNIARA Cloud...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-blue-900 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">BP Generator <span class="text-xs bg-blue-700 px-2 py-1 rounded ml-2">DIRECT CLOUD</span></h1>
+                <p class="text-xs opacity-80">UNIARA - Gestão de Planos de Negócios</p>
+            </div>
+            <div id="userInfo" class="hidden flex items-center space-x-3">
+                <div class="text-right">
+                    <p class="text-sm font-medium" id="displayUserName"></p>
+                    <p class="text-[10px] text-green-400 uppercase font-bold">Conectado</p>
+                </div>
+                <img id="userPhoto" class="h-10 w-10 rounded-full border-2 border-white/30" src="" alt="">
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto py-8 px-4">
+        <!-- Login Section -->
+        <section id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-100">
+            <div class="text-center mb-8">
+                <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-3xl">🎓</span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Portal UNIARA</h2>
+                <p class="text-gray-500 mt-2 text-sm">Acesse para colaboração em tempo real</p>
+            </div>
+            
+            <button onclick="cloud.handleAuthClick()" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="">
+                <span>Entrar com Google UNIARA</span>
+            </button>
+        </section>
+
+        <!-- File List Section (Substitui o Picker) -->
+        <section id="fileListSection" class="max-w-3xl mx-auto hidden">
+            <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800">Seus Projetos no Drive</h2>
+                    <button onclick="ui.showSection('purposeSection')" class="btn-primary px-4 py-2 rounded-lg text-sm">+ Novo Plano</button>
+                </div>
+                
+                <div id="driveFilesContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                    <!-- Lista de arquivos será injetada aqui -->
+                    <p class="text-center text-gray-400 py-8">Buscando arquivos no seu Drive...</p>
+                </div>
+
+                <div class="mt-8 pt-6 border-t flex justify-between items-center">
+                    <button onclick="cloud.refreshFiles()" class="text-blue-600 text-sm font-bold hover:underline">🔄 Atualizar Lista</button>
+                    <button onclick="auth.logout()" class="text-red-500 text-sm font-bold hover:underline">Sair da Conta</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- [RESTANTE DAS SEÇÕES: PURPOSE, MEMBERS, EDITOR...] -->
+    </main>
+
+    <script>
+        // CONFIGURAÇÕES
+        const CLIENT_ID = 'SEU_CLIENT_ID';
+        const API_KEY = 'SUA_API_KEY';
+        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/discovery"];
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+
+        const cloud = {
+            // ... (auth logic)
+
+            // NOVA FUNÇÃO: Listar arquivos sem Picker API
+            listDriveFiles: async () => {
+                try {
+                    const response = await gapi.client.drive.files.list({
+                        'pageSize': 20,
+                        'fields': "files(id, name, modifiedTime, owners)",
+                        'q': "mimeType = 'application/json' and trashed = false and name contains 'plano_de_negocios'"
+                    });
+                    const files = response.result.files;
+                    const container = document.getElementById('driveFilesContainer');
+                    container.innerHTML = '';
+
+                    if (files && files.length > 0) {
+                        files.forEach(file => {
+                            const date = new Date(file.modifiedTime).toLocaleDateString('pt-BR');
+                            const div = document.createElement('div');
+                            div.className = "p-4 border rounded-xl hover:bg-blue-50 cursor-pointer transition flex justify-between items-center group";
+                            div.onclick = () => cloud.loadFile(file.id);
+                            div.innerHTML = `
+                                <div>
+                                    <p class="font-bold text-gray-800 group-hover:text-blue-900">${file.name.replace('.json', '')}</p>
+                                    <p class="text-xs text-gray-500">Última edição: ${date}</p>
+                                </div>
+                                <span class="text-blue-400 opacity-0 group-hover:opacity-100 transition">Abrir →</span>
+                            `;
+                            container.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum plano encontrado no seu Drive.</p>';
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        };
+    </script>
+</body>
+</html>
