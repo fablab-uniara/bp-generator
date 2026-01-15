@@ -1,10 +1,10 @@
-<!-- BP Generator UNIARA - Versão v6 (Correção Manual) -->
+<!-- BP Generator UNIARA - VERSÃO FINAL INTEGRADA (Cloud + Todos os Módulos) -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator UNIARA</title>
+    <title>BP Generator UNIARA - Cloud Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -13,67 +13,201 @@
     <style>
         .form-section { display: none; }
         .form-section.active { display: block; }
-        .loading-overlay { background: rgba(255,255,255,0.9 ); backdrop-filter: blur(4px); position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
-        .btn-primary { background-color: #1e3a8a; color: white; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 0.75rem; transition: all 0.2s; }
+        .guide-box { border-left: 4px solid #1e3a8a; background-color: #f0f9ff; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0; margin-bottom: 1.5rem; }
+        .loading-overlay { background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .btn-primary { background-color: #1e3a8a; color: white; font-weight: bold; padding: 0.75rem 1.5rem; border-radius: 0.5rem; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #1e40af; transform: translateY(-1px); }
+        .tab-btn.active { border-bottom: 3px solid #1e3a8a; color: #1e3a8a; font-weight: bold; }
+        .card { background: white; padding: 1.5rem; border-radius: 1rem; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #f3f4f6; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen font-sans">
+    <!-- Overlay de Carregamento -->
     <div id="loadingOverlay" class="hidden loading-overlay">
         <div class="text-center">
             <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent"></div>
-            <p class="mt-4 text-blue-900 font-bold">Sincronizando...</p>
+            <p class="mt-4 text-blue-900 font-bold" id="loadingText">Sincronizando com UNIARA Cloud...</p>
         </div>
     </div>
 
-    <header class="bg-blue-900 text-white p-4 shadow-lg">
+    <!-- Header -->
+    <header class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">BP Generator UNIARA</h1>
-                <p class="text-xs opacity-80">Versão 6.0 - Sincronização em Nuvem</p>
+            <div class="flex items-center space-x-3">
+                <div class="bg-white p-1.5 rounded-lg">
+                    <span class="text-blue-900 font-black text-xl">U</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight leading-none">BP Generator</h1>
+                    <p class="text-[10px] opacity-70 uppercase tracking-widest">UNIARA - Cloud Edition</p>
+                </div>
             </div>
             <div id="userInfo" class="hidden flex items-center space-x-3">
-                <div class="text-right">
-                    <p class="text-sm font-medium" id="displayUserName"></p>
-                    <p class="text-[10px] text-green-400 uppercase font-bold">Conectado</p>
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-medium" id="displayUserName"></p>
+                    <p class="text-[9px] text-green-400 uppercase font-bold">Online</p>
                 </div>
-                <img id="userPhoto" class="h-10 w-10 rounded-full border-2 border-white/30" src="" alt="">
+                <img id="userPhoto" class="h-9 w-9 rounded-full border-2 border-white/20" src="" alt="">
+                <button id="logoutBtn" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition" title="Sair">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="container mx-auto py-8 px-4">
-        <section id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-gray-100">
-            <div class="text-center mb-8">
-                <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-3xl">🎓</span>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800">Portal UNIARA</h2>
-                <p class="text-gray-500 mt-2 text-sm">Acesse para colaboração em tempo real</p>
+    <main class="container mx-auto py-6 px-4">
+        <!-- 1. TELA DE LOGIN -->
+        <section id="loginSection" class="max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 text-center">
+            <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="text-4xl">🎓</span>
             </div>
-            <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300">
+            <h2 class="text-2xl font-bold text-gray-800">Portal UNIARA</h2>
+            <p class="text-gray-500 mt-2 mb-8">Acesse sua conta institucional para criar e colaborar em Planos de Negócios.</p>
+            <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300 shadow-sm">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="">
                 <span>Entrar com Google UNIARA</span>
             </button>
+            <p class="mt-6 text-[10px] text-gray-400 uppercase tracking-widest">Ambiente Seguro & Colaborativo</p>
         </section>
 
-        <section id="fileListSection" class="max-w-3xl mx-auto hidden">
-            <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-2xl font-bold text-gray-800">Seus Projetos no Drive</h2>
-                    <button id="newPlanBtn" class="btn-primary"> + Novo Plano </button>
+        <!-- 2. TELA DE LISTAGEM DE ARQUIVOS -->
+        <section id="fileListSection" class="max-w-4xl mx-auto hidden">
+            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Meus Projetos</h2>
+                        <p class="text-sm text-gray-500">Arquivos salvos no seu Google Drive</p>
+                    </div>
+                    <button id="startNewBtn" class="btn-primary w-full sm:w-auto shadow-lg shadow-blue-900/20"> + Criar Novo Plano </button>
                 </div>
-                <div id="driveFilesContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                    <p class="text-center text-gray-400 py-8">Buscando arquivos...</p>
+                
+                <div id="driveFilesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2">
+                    <!-- Arquivos serão injetados aqui -->
                 </div>
-                <div class="mt-8 pt-6 border-t flex justify-between items-center">
-                    <button id="refreshFilesBtn" class="text-blue-600 text-sm font-bold hover:underline">🔄 Atualizar Lista</button>
-                    <button id="logoutBtn" class="text-red-500 text-sm font-bold hover:underline">Sair da Conta</button>
+                
+                <div class="mt-8 pt-6 border-t flex justify-center">
+                    <button id="refreshFilesBtn" class="flex items-center space-x-2 text-blue-600 font-bold hover:bg-blue-50 px-4 py-2 rounded-lg transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span>Atualizar Lista</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. TELA DE FINALIDADE (NOVO PLANO) -->
+        <section id="purposeSection" class="max-w-4xl mx-auto hidden">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-800">Qual a finalidade deste plano?</h2>
+                <p class="text-gray-500 mt-2">Isso nos ajuda a configurar as ferramentas ideais para você.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onclick="app.setPurpose('academic')" class="card cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition group">
+                    <div class="text-3xl mb-4 group-hover:scale-110 transition">📚</div>
+                    <h3 class="font-bold text-lg text-gray-800">Trabalho Acadêmico</h3>
+                    <p class="text-sm text-gray-500 mt-2">Focado em grupos, normas e estrutura pedagógica.</p>
+                </div>
+                <div onclick="app.setPurpose('new_business')" class="card cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition group">
+                    <div class="text-3xl mb-4 group-hover:scale-110 transition">🚀</div>
+                    <h3 class="font-bold text-lg text-gray-800">Novo Negócio</h3>
+                    <p class="text-sm text-gray-500 mt-2">Focado em viabilidade real e captação de recursos.</p>
+                </div>
+                <div onclick="app.setPurpose('analysis')" class="card cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition group">
+                    <div class="text-3xl mb-4 group-hover:scale-110 transition">🔍</div>
+                    <h3 class="font-bold text-lg text-gray-800">Análise de Negócio</h3>
+                    <p class="text-sm text-gray-500 mt-2">Para empresas já existentes que buscam melhorias.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. TELA DE CONFIGURAÇÃO DE GRUPO (SE ACADÊMICO) -->
+        <section id="groupSection" class="max-w-2xl mx-auto hidden">
+            <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Configuração do Grupo</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Projeto</label>
+                        <input type="text" id="projectNameInput" class="w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Startup de Tecnologia">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Integrantes do Grupo</label>
+                        <div id="membersList" class="space-y-2 mb-3">
+                            <!-- Integrantes aqui -->
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="email" id="newMemberEmail" class="flex-1 p-3 border rounded-xl outline-none" placeholder="E-mail institucional do colega">
+                            <button onclick="app.addMember()" class="bg-gray-100 hover:bg-gray-200 px-4 rounded-xl font-bold text-gray-600 transition">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-10 flex justify-between">
+                    <button onclick="ui.showSection('purposeSection')" class="text-gray-500 font-bold">Voltar</button>
+                    <button onclick="app.createProject()" class="btn-primary">Iniciar Plano na Nuvem</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. EDITOR PRINCIPAL (WIZARD) -->
+        <section id="editorSection" class="hidden">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Sidebar de Navegação -->
+                <aside class="lg:w-64 space-y-2">
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-gray-400 uppercase">Progresso</span>
+                            <span id="progressPercent" class="text-xs font-bold text-blue-600">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5">
+                            <div id="progressBar" class="bg-blue-600 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <nav id="mainNav" class="space-y-1">
+                        <button onclick="app.goToStep(0)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="0">
+                            <span>🆔</span> <span>Identificação</span>
+                        </button>
+                        <button onclick="app.goToStep(1)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="1">
+                            <span>🎯</span> <span>Mercado</span>
+                        </button>
+                        <button onclick="app.goToStep(2)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="2">
+                            <span>💡</span> <span>Problema & Valor</span>
+                        </button>
+                        <button onclick="app.goToStep(3)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="3">
+                            <span>📢</span> <span>Marketing</span>
+                        </button>
+                        <button onclick="app.goToStep(4)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="4">
+                            <span>⚙️</span> <span>Operacional</span>
+                        </button>
+                        <button onclick="app.goToStep(5)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="5">
+                            <span>💰</span> <span>Financeiro</span>
+                        </button>
+                        <button onclick="app.goToStep(6)" class="nav-item w-full text-left p-3 rounded-xl font-medium transition hover:bg-blue-50 flex items-center space-x-3" data-step="6">
+                            <span>📊</span> <span>Viabilidade</span>
+                        </button>
+                    </nav>
+                    <div class="pt-6 space-y-2">
+                        <button onclick="app.saveToCloud()" class="w-full bg-green-600 text-white p-3 rounded-xl font-bold shadow-lg shadow-green-900/20 hover:bg-green-700 transition flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            <span>Salvar no Drive</span>
+                        </button>
+                        <button onclick="app.exportPDF()" class="w-full bg-gray-800 text-white p-3 rounded-xl font-bold hover:bg-black transition flex items-center justify-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Exportar PDF</span>
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Área de Conteúdo do Editor -->
+                <div class="flex-1 bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-h-[600px]">
+                    <div id="stepContent" class="p-8">
+                        <!-- Conteúdo dinâmico dos passos será injetado aqui -->
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- Scripts de Lógica -->
     <script>
+        // CREDENCIAIS UNIARA (Sincronizadas)
         const CLIENT_ID = '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com';
         const API_KEY = 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo';
         
@@ -83,9 +217,19 @@
         let tokenClient;
         let gapiInited = false;
         let gsiInited = false;
+        let currentFileId = null;
+        let currentPlan = {
+            id: null,
+            purpose: '',
+            name: '',
+            members: [],
+            data: {},
+            lastUpdate: null
+        };
 
+        // --- MÓDULO CLOUD ---
         const cloud = {
-            init: function( ) {
+            init: function() {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
@@ -100,61 +244,343 @@
                 gsiInited = true;
             },
             handleAuthClick: function() {
-                if (!gsiInited || !tokenClient) return alert('Aguarde o carregamento do Google...');
+                if (!gsiInited) return alert('Carregando Google...');
                 tokenClient.callback = async (resp) => {
                     if (resp.error !== undefined) throw (resp);
+                    ui.showLoading(true, "Conectando ao Google...");
                     await cloud.loadUserProfile();
                     ui.showSection('fileListSection');
-                    cloud.listDriveFiles();
+                    await cloud.listDriveFiles();
+                    ui.showLoading(false);
                 };
                 tokenClient.requestAccessToken({prompt: 'consent'});
             },
             loadUserProfile: async function() {
                 const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${gapi.client.getToken( ).access_token}` }
+                    headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
                 });
                 const user = await resp.json();
                 document.getElementById('userInfo').classList.remove('hidden');
                 document.getElementById('userPhoto').src = user.picture;
                 document.getElementById('displayUserName').innerText = user.name;
+                currentPlan.members = [{ name: user.name, email: user.email, role: 'Coordenador' }];
             },
             listDriveFiles: async function() {
                 const container = document.getElementById('driveFilesContainer');
-                container.innerHTML = '<p class="text-center text-gray-400 py-8">Buscando arquivos...</p>';
+                container.innerHTML = '<div class="col-span-full text-center py-12"><div class="animate-spin h-8 w-8 border-4 border-blue-900 border-t-transparent rounded-full mx-auto"></div></div>';
                 try {
                     const response = await gapi.client.drive.files.list({
                         'pageSize': 20,
                         'fields': "files(id, name, modifiedTime)",
-                        'q': "mimeType = 'application/json' and trashed = false"
+                        'q': "name contains 'UNIARA_BP_' and mimeType = 'application/json' and trashed = false"
                     });
                     const files = response.result.files;
                     container.innerHTML = '';
                     if (files && files.length > 0) {
                         files.forEach(file => {
+                            const date = new Date(file.modifiedTime).toLocaleDateString();
                             const div = document.createElement('div');
-                            div.className = "p-4 border rounded-xl hover:bg-blue-50 cursor-pointer transition flex justify-between items-center group";
-                            div.innerHTML = `<div><p class="font-bold text-gray-800">${file.name}</p></div><span class="text-blue-400">Abrir →</span>`;
-                            div.onclick = () => alert('Abrindo: ' + file.id);
+                            div.className = "card group cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition flex justify-between items-center";
+                            div.innerHTML = `
+                                <div>
+                                    <p class="font-bold text-gray-800">${file.name.replace('UNIARA_BP_', '')}</p>
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold">Atualizado em ${date}</p>
+                                </div>
+                                <div class="bg-blue-100 text-blue-700 p-2 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                                </div>
+                            `;
+                            div.onclick = () => cloud.loadFile(file.id);
                             container.appendChild(div);
                         });
                     } else {
-                        container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhum plano encontrado.</p>';
+                        container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">Nenhum plano encontrado no seu Drive.</div>';
                     }
                 } catch (err) {
-                    container.innerHTML = '<p class="text-center text-red-400 py-8">Erro ao listar arquivos.</p>';
+                    container.innerHTML = '<div class="col-span-full text-center py-12 text-red-400">Erro ao conectar com o Drive.</div>';
                 }
+            },
+            loadFile: async function(fileId) {
+                ui.showLoading(true, "Abrindo plano...");
+                try {
+                    const response = await gapi.client.drive.files.get({
+                        fileId: fileId,
+                        alt: 'media'
+                    });
+                    currentPlan = response.result;
+                    currentFileId = fileId;
+                    ui.showSection('editorSection');
+                    app.goToStep(0);
+                } catch (e) { alert("Erro ao carregar arquivo."); }
+                ui.showLoading(false);
+            },
+            saveFile: async function() {
+                ui.showLoading(true, "Salvando no Drive...");
+                const fileName = `UNIARA_BP_${currentPlan.name}.json`;
+                const content = JSON.stringify(currentPlan);
+                
+                try {
+                    if (currentFileId) {
+                        // Update
+                        await gapi.client.request({
+                            path: `/upload/drive/v3/files/${currentFileId}`,
+                            method: 'PATCH',
+                            params: { uploadType: 'media' },
+                            body: content
+                        });
+                    } else {
+                        // Create
+                        const metadata = { name: fileName, mimeType: 'application/json' };
+                        const form = new FormData();
+                        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                        form.append('file', new Blob([content], { type: 'application/json' }));
+                        
+                        const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
+                            body: form
+                        });
+                        const result = await resp.json();
+                        currentFileId = result.id;
+                    }
+                    alert("✅ Salvo com sucesso no seu Google Drive!");
+                } catch (e) { alert("Erro ao salvar."); }
+                ui.showLoading(false);
             }
         };
 
+        // --- MÓDULO APP (LÓGICA DE NEGÓCIO) ---
+        const app = {
+            setPurpose: (p) => {
+                currentPlan.purpose = p;
+                if (p === 'academic') ui.showSection('groupSection');
+                else {
+                    currentPlan.name = "Novo Projeto";
+                    ui.showSection('groupSection'); // Reutiliza para nome
+                }
+            },
+            addMember: () => {
+                const email = document.getElementById('newMemberEmail').value;
+                if (!email || !email.includes('@')) return alert("E-mail inválido");
+                currentPlan.members.push({ name: email.split('@')[0], email: email, role: 'Membro' });
+                document.getElementById('newMemberEmail').value = '';
+                app.renderMembers();
+            },
+            renderMembers: () => {
+                const list = document.getElementById('membersList');
+                list.innerHTML = currentPlan.members.map((m, i) => `
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl border">
+                        <div>
+                            <p class="font-bold text-sm text-gray-800">${m.name}</p>
+                            <p class="text-[10px] text-gray-400 uppercase">${m.role}</p>
+                        </div>
+                        ${i > 0 ? `<button onclick="app.removeMember(${i})" class="text-red-400 hover:text-red-600">✕</button>` : ''}
+                    </div>
+                `).join('');
+            },
+            removeMember: (i) => {
+                currentPlan.members.splice(i, 1);
+                app.renderMembers();
+            },
+            createProject: () => {
+                const name = document.getElementById('projectNameInput').value;
+                if (!name) return alert("Dê um nome ao projeto");
+                currentPlan.name = name;
+                cloud.saveFile().then(() => {
+                    ui.showSection('editorSection');
+                    app.goToStep(0);
+                });
+            },
+            goToStep: (step) => {
+                const container = document.getElementById('stepContent');
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('bg-blue-100', 'text-blue-900', 'font-bold'));
+                document.querySelector(`[data-step="${step}"]`).classList.add('bg-blue-100', 'text-blue-900', 'font-bold');
+                
+                // Renderização dinâmica baseada no passo
+                const steps = [
+                    app.renderStep0, // Identificação
+                    app.renderStep1, // Mercado
+                    app.renderStep2, // Problema
+                    app.renderStep3, // Marketing
+                    app.renderStep4, // Operacional
+                    app.renderStep5, // Financeiro
+                    app.renderStep6  // Viabilidade
+                ];
+                container.innerHTML = steps[step]();
+                app.updateProgress();
+            },
+            updateProgress: () => {
+                // Lógica simples de progresso
+                const totalSteps = 7;
+                const current = parseInt(document.querySelector('.nav-item.font-bold').dataset.step) + 1;
+                const percent = Math.round((current / totalSteps) * 100);
+                document.getElementById('progressBar').style.width = percent + '%';
+                document.getElementById('progressPercent').innerText = percent + '%';
+            },
+            
+            // --- RENDERIZADORES DE PASSOS ---
+            renderStep0: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">🆔 Identificação do Negócio</h3>
+                    <p class="text-sm text-blue-700">Defina a estrutura formal da sua empresa. Escolha o enquadramento tributário com base no faturamento previsto.</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Nome da Empresa</label>
+                            <input type="text" value="${currentPlan.name}" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Ramo de Atividade</label>
+                            <select class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>Comércio</option>
+                                <option>Serviços</option>
+                                <option>Indústria</option>
+                                <option>Agronegócio</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Missão da Empresa</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Qual o propósito da sua empresa?"></textarea>
+                    </div>
+                </div>
+            `,
+            renderStep1: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">🎯 Análise de Mercado</h3>
+                    <p class="text-sm text-blue-700">Entenda quem é seu cliente e como ele se comporta. Defina seu público-alvo de forma estratégica.</p>
+                </div>
+                <div class="space-y-8">
+                    <div class="card bg-blue-50 border-blue-100">
+                        <h4 class="font-bold text-blue-900 mb-4">Tipo de Público</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button class="p-4 bg-white border-2 border-blue-200 rounded-xl font-bold text-blue-900 hover:border-blue-500 transition">B2C Individual</button>
+                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400 hover:border-blue-500 transition">B2B PMEs</button>
+                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400 hover:border-blue-500 transition">B2B Grandes</button>
+                            <button class="p-4 bg-white border-2 border-gray-100 rounded-xl font-bold text-gray-400 hover:border-blue-500 transition">Nicho Específico</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="card">
+                            <h4 class="font-bold text-gray-800 mb-4">Características da Persona</h4>
+                            <div class="space-y-3">
+                                <input type="text" placeholder="Faixa Etária" class="w-full p-2 border-b outline-none">
+                                <input type="text" placeholder="Renda Média" class="w-full p-2 border-b outline-none">
+                                <input type="text" placeholder="Localização" class="w-full p-2 border-b outline-none">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h4 class="font-bold text-gray-800 mb-4">Dores do Cliente</h4>
+                            <textarea class="w-full p-2 border rounded-xl h-24 outline-none" placeholder="O que tira o sono do seu cliente?"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `,
+            renderStep5: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">💰 Planejamento Financeiro</h3>
+                    <p class="text-sm text-blue-700">O coração do seu plano. Calcule investimentos, custos e receitas para entender a viabilidade.</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex space-x-4 border-b mb-6">
+                        <button class="tab-btn active pb-2 px-4">Investimentos</button>
+                        <button class="tab-btn pb-2 px-4 text-gray-400">Custos</button>
+                        <button class="tab-btn pb-2 px-4 text-gray-400">Receitas</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="card bg-gray-50">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Investimento Fixo</p>
+                            <p class="text-2xl font-black text-gray-800">R$ 0,00</p>
+                        </div>
+                        <div class="card bg-gray-50">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Capital de Giro</p>
+                            <p class="text-2xl font-black text-gray-800">R$ 0,00</p>
+                        </div>
+                        <div class="card bg-blue-900 text-white">
+                            <p class="text-[10px] font-bold text-blue-300 uppercase">Total Inicial</p>
+                            <p class="text-2xl font-black">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="p-3 text-xs font-bold text-gray-600 uppercase">Descrição</th>
+                                <th class="p-3 text-xs font-bold text-gray-600 uppercase">Valor (R$)</th>
+                                <th class="p-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-3 border-b"><input type="text" placeholder="Ex: Máquinas" class="w-full outline-none"></td>
+                                <td class="p-3 border-b"><input type="number" placeholder="0.00" class="w-full outline-none"></td>
+                                <td class="p-3 border-b text-right"><button class="text-red-400">✕</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button class="text-blue-600 font-bold text-sm">+ Adicionar Item</button>
+                </div>
+            `,
+            renderStep6: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">📊 Análise de Viabilidade</h3>
+                    <p class="text-sm text-blue-700">Veja se o seu negócio para de pé. Analisamos seus números e damos um diagnóstico real.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card flex flex-col items-center justify-center py-12">
+                        <p class="text-sm font-bold text-gray-400 uppercase mb-4">Score de Viabilidade</p>
+                        <div class="relative w-40 h-40 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-gray-100"></circle>
+                                <circle cx="80" cy="80" r="70" stroke="currentColor" stroke-width="12" fill="transparent" class="text-blue-600" stroke-dasharray="440" stroke-dashoffset="330"></circle>
+                            </svg>
+                            <span class="absolute text-4xl font-black text-gray-800">25%</span>
+                        </div>
+                        <p class="mt-6 px-4 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold uppercase">Risco Alto</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="card border-l-4 border-l-red-500">
+                            <h4 class="font-bold text-gray-800">Ponto de Atenção</h4>
+                            <p class="text-sm text-gray-500 mt-1">Seu investimento inicial está muito alto para a receita prevista no primeiro ano.</p>
+                        </div>
+                        <div class="card border-l-4 border-l-green-500">
+                            <h4 class="font-bold text-gray-800">Ponto Forte</h4>
+                            <p class="text-sm text-gray-500 mt-1">Sua margem de contribuição é excelente, o que facilita o crescimento futuro.</p>
+                        </div>
+                        <button class="w-full btn-primary mt-4">Gerar Relatório Completo</button>
+                    </div>
+                </div>
+            `,
+            
+            saveToCloud: () => cloud.saveFile(),
+            exportPDF: () => alert("Gerando PDF do Plano UNIARA..."),
+            updateProgress: () => {
+                const total = 7;
+                const current = parseInt(document.querySelector('.nav-item.font-bold')?.dataset.step || 0) + 1;
+                const pct = Math.round((current / total) * 100);
+                document.getElementById('progressBar').style.width = pct + '%';
+                document.getElementById('progressPercent').innerText = pct + '%';
+            }
+        };
+
+        // --- MÓDULO UI ---
         const ui = {
-            showSection: function(id) {
+            showSection: (id) => {
                 document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-                document.getElementById(id).classList.remove('hidden');
+                const target = document.getElementById(id);
+                if (target) target.classList.remove('hidden');
+                window.scrollTo(0,0);
+            },
+            showLoading: (show, text = "Sincronizando...") => {
+                const overlay = document.getElementById('loadingOverlay');
+                document.getElementById('loadingText').innerText = text;
+                if (show) overlay.classList.remove('hidden');
+                else overlay.classList.add('hidden');
             }
         };
 
         const auth = {
-            logout: function() {
+            logout: () => {
                 const token = gapi.client.getToken();
                 if (token !== null) {
                     google.accounts.oauth2.revoke(token.access_token);
@@ -165,18 +591,13 @@
             }
         };
 
-        window.addEventListener('DOMContentLoaded', (event) => {
+        // Inicialização
+        window.addEventListener('DOMContentLoaded', () => {
             cloud.init();
-            const loginBtn = document.getElementById('googleLoginBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', () => {
-                    cloud.handleAuthClick();
-                });
-            }
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) logoutBtn.addEventListener('click', auth.logout);
-            const refreshBtn = document.getElementById('refreshFilesBtn');
-            if (refreshBtn) refreshBtn.addEventListener('click', cloud.listDriveFiles);
+            document.getElementById('googleLoginBtn').addEventListener('click', cloud.handleAuthClick);
+            document.getElementById('logoutBtn').addEventListener('click', auth.logout);
+            document.getElementById('refreshFilesBtn').addEventListener('click', cloud.listDriveFiles);
+            document.getElementById('startNewBtn').addEventListener('click', () => ui.showSection('purposeSection'));
         });
     </script>
 </body>
