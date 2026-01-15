@@ -3,332 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator UNIARA - Cloud Edition</title>
+    <title>BP Generator - Debug Mode</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        .loading-overlay { 
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(4px); 
-            position: fixed; inset: 0; z-index: 1000; 
-            display: flex; align-items: center; justify-content: center;
+        .debug-console {
+            background: #1a1a1a; color: #00ff00; 
+            font-family: 'Courier New', monospace; font-size: 13px;
+            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            height: 200px; overflow-y: auto; border: 2px solid #333;
         }
-        .guide-box { 
-            border-left: 4px solid #1e3a8a; 
-            background-color: #f0f9ff; 
-            padding: 1rem; 
-            border-radius: 0 0.5rem 0.5rem 0; 
-            margin-bottom: 1.5rem; 
-        }
-        .nav-item { cursor: pointer; transition: all 0.2s; }
+        .log-error { color: #ff5555; font-weight: bold; }
+        .log-warn { color: #ffff55; }
+        .log-success { color: #55ff55; font-weight: bold; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+<body class="bg-gray-100 min-h-screen p-4">
 
-    <div id="loadingOverlay" class="hidden loading-overlay">
-        <div class="text-center">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent"></div>
-            <p class="mt-4 text-blue-900 font-bold" id="loadingText">Carregando...</p>
+    <div class="max-w-4xl mx-auto">
+        
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">🔧 Painel de Diagnóstico</h2>
+            <p class="text-sm text-gray-600 mb-4">Se o botão de login não funcionar, copie o erro abaixo e me mostre.</p>
+            
+            <div id="consoleBox" class="debug-console">
+                > Iniciando sistema...<br>
+            </div>
+
+            <div class="flex gap-4">
+                <button id="googleLoginBtn" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Entrar com Google
+                </button>
+                <button onclick="app.bypass()" class="text-gray-500 underline text-sm">
+                    Modo Offline (Sem Google)
+                </button>
+            </div>
         </div>
+
+        <div id="appArea" class="hidden bg-white p-8 rounded-xl shadow-lg">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h1 class="text-2xl font-bold text-blue-900">BP Generator UNIARA</h1>
+                <div id="userInfo" class="text-sm text-gray-500">Modo Visitante</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <nav class="space-y-2">
+                    <button onclick="app.step(1)" class="w-full text-left p-2 rounded hover:bg-blue-50 font-medium">1. Identificação</button>
+                    <button onclick="app.step(2)" class="w-full text-left p-2 rounded hover:bg-blue-50 font-medium">2. Mercado</button>
+                    <button onclick="app.step(3)" class="w-full text-left p-2 rounded hover:bg-blue-50 font-medium">3. Financeiro</button>
+                    <div class="h-4"></div>
+                    <button onclick="app.save()" class="w-full bg-green-600 text-white p-2 rounded text-center">Salvar (Drive)</button>
+                    <button onclick="app.pdf()" class="w-full bg-gray-700 text-white p-2 rounded text-center">Gerar PDF</button>
+                </nav>
+
+                <div class="col-span-3 bg-gray-50 p-6 rounded-lg border">
+                    <h3 id="stepTitle" class="text-lg font-bold mb-4 text-blue-800">Bem-vindo</h3>
+                    <div id="stepContent">
+                        <p>Selecione uma etapa no menu ao lado para começar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <header class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-white p-1.5 rounded-lg"><span class="text-blue-900 font-black text-xl">U</span></div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight leading-none">BP Generator</h1>
-                    <p class="text-[10px] opacity-70 uppercase tracking-widest">UNIARA - Cloud Edition</p>
-                </div>
-            </div>
-            <div id="userInfo" class="hidden flex items-center space-x-3">
-                <span id="displayUserName" class="text-sm font-medium hidden sm:block"></span>
-                <img id="userPhoto" class="h-8 w-8 rounded-full border border-white" src="" alt="">
-                <button id="logoutBtn" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-1 rounded ml-2">Sair</button>
-            </div>
-        </div>
-    </header>
-
-    <main class="container mx-auto py-6 px-4">
-        
-        <section id="loginSection" class="max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-xl text-center">
-            <div class="text-5xl mb-4">🎓</div>
-            <h2 class="text-2xl font-bold text-gray-800">Acesso ao Sistema</h2>
-            <p class="text-gray-500 mt-2 mb-8">Faça login para gerenciar seus planos.</p>
-            
-            <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-700 font-bold py-3 rounded-xl transition-all shadow-sm">
-                <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                <span>Entrar com Google</span>
-            </button>
-            <p id="statusMsg" class="text-xs text-gray-400 mt-4">Aguardando bibliotecas do Google...</p>
-        </section>
-
-        <section id="fileListSection" class="hidden max-w-4xl mx-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Meus Projetos</h2>
-                <button onclick="ui.showSection('purposeSection')" class="bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800">+ Novo</button>
-            </div>
-            <div id="driveFilesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            <button id="refreshFilesBtn" class="mt-4 text-blue-600 text-sm font-bold mx-auto block">Atualizar Lista</button>
-        </section>
-
-        <section id="purposeSection" class="hidden max-w-4xl mx-auto text-center">
-            <h2 class="text-2xl font-bold mb-8">Objetivo do Plano</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div onclick="app.setPurpose('academic')" class="bg-white p-6 rounded-xl shadow cursor-pointer hover:ring-2 ring-blue-500"><div class="text-3xl">📚</div><h3 class="font-bold">Acadêmico</h3></div>
-                <div onclick="app.setPurpose('business')" class="bg-white p-6 rounded-xl shadow cursor-pointer hover:ring-2 ring-blue-500"><div class="text-3xl">🚀</div><h3 class="font-bold">Negócio</h3></div>
-                <div onclick="app.setPurpose('analysis')" class="bg-white p-6 rounded-xl shadow cursor-pointer hover:ring-2 ring-blue-500"><div class="text-3xl">🔍</div><h3 class="font-bold">Análise</h3></div>
-            </div>
-        </section>
-
-        <section id="groupSection" class="hidden max-w-xl mx-auto bg-white p-8 rounded-xl shadow">
-            <h2 class="text-xl font-bold mb-4">Dados Iniciais</h2>
-            <input type="text" id="projectNameInput" class="w-full p-3 border rounded mb-4" placeholder="Nome do Projeto">
-            
-            <div class="mb-4">
-                <label class="block text-sm font-bold mb-1">Equipe</label>
-                <div class="flex gap-2">
-                    <input type="email" id="newMemberEmail" class="flex-1 p-2 border rounded" placeholder="Email do integrante">
-                    <button onclick="app.addMember()" class="bg-gray-200 px-4 rounded">Add</button>
-                </div>
-                <div id="membersList" class="mt-2 text-sm text-gray-600"></div>
-            </div>
-
-            <div class="flex justify-between mt-6">
-                <button onclick="ui.showSection('purposeSection')" class="text-gray-500">Voltar</button>
-                <button onclick="app.createProject()" class="bg-blue-900 text-white px-6 py-2 rounded font-bold">Criar Plano</button>
-            </div>
-        </section>
-
-        <section id="editorSection" class="hidden flex flex-col lg:flex-row gap-6">
-            <aside class="lg:w-64 space-y-2">
-                <nav id="mainNav" class="space-y-1">
-                    <button onclick="app.goToStep(0)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="0">1. Identificação</button>
-                    <button onclick="app.goToStep(1)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="1">2. Mercado</button>
-                    <button onclick="app.goToStep(2)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="2">3. Solução</button>
-                    <button onclick="app.goToStep(3)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="3">4. Marketing</button>
-                    <button onclick="app.goToStep(4)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="4">5. Operacional</button>
-                    <button onclick="app.goToStep(5)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="5">6. Financeiro</button>
-                    <button onclick="app.goToStep(6)" class="nav-item w-full text-left p-3 rounded hover:bg-blue-50" data-step="6">7. Resumo</button>
-                </nav>
-                <hr class="my-4">
-                <button onclick="app.saveToCloud()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">💾 Salvar</button>
-                <button onclick="app.exportPDF()" class="w-full bg-gray-700 text-white p-2 rounded hover:bg-gray-800">📄 PDF</button>
-            </aside>
-
-            <div class="flex-1 bg-white rounded-xl shadow p-8 min-h-[500px]">
-                <div id="stepContent"></div>
-            </div>
-        </section>
-    </main>
-
     <script>
-        // --- CONFIGURAÇÕES ---
-        const CLIENT_ID = '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com';
-        const API_KEY = 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo';
-        const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-        const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile';
+        // === 1. CONFIGURAÇÃO ===
+        const CONFIG = {
+            // SEU CLIENT ID AQUI
+            clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com',
+            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo',
+            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
+            discovery: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
+        };
 
-        // Variáveis Globais
+        // Estado Global
         let tokenClient;
         let gapiInited = false;
         let gsiInited = false;
-        let currentFileId = null;
-        let currentPlan = { id: null, purpose: '', name: '', members: [], data: {} };
+        let currentPlan = { name: '', data: {} };
 
-        // --- SISTEMA DE NUVEM ---
-        const cloud = {
-            // Chamado quando o script do GAPI terminar de carregar
-            gapiInit: function() {
-                gapi.load('client', async () => {
-                    try {
-                        await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
-                        gapiInited = true;
-                        cloud.checkAuthStatus();
-                    } catch (e) { console.error("Erro GAPI", e); alert("Erro ao conectar Google Drive."); }
-                });
-            },
-            // Chamado quando o script do GSI terminar de carregar
-            gsiInit: function() {
+        // === 2. LOGGER VISUAL (Para você ver o erro) ===
+        function log(msg, type='info') {
+            const box = document.getElementById('consoleBox');
+            let colorClass = '';
+            if(type === 'error') colorClass = 'log-error';
+            if(type === 'success') colorClass = 'log-success';
+            
+            const time = new Date().toLocaleTimeString();
+            box.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+            console.log(`[${type}] ${msg}`);
+        }
+
+        // === 3. INICIALIZAÇÃO SEGURA ===
+        function initSystem() {
+            // Detecta a URL atual para ajudar na configuração do Google
+            const origin = window.location.origin;
+            log(`📍 SUA ORIGEM ATUAL É: ${origin}`, 'warn');
+            log(`⚠️ Certifique-se de que EXATAMENTE esta URL (sem barra no final se não tiver aqui) está nas "Origens JavaScript Autorizadas" no Google Cloud.`);
+
+            loadScripts();
+        }
+
+        function loadScripts() {
+            log("Baixando script GAPI...");
+            const s1 = document.createElement('script');
+            s1.src = "https://apis.google.com/js/api.js";
+            s1.onload = () => {
+                log("GAPI baixado. Inicializando...");
+                gapi.load('client', initGapi);
+            };
+            s1.onerror = () => log("ERRO FATAL: Não foi possível baixar GAPI.", 'error');
+            document.body.appendChild(s1);
+
+            log("Baixando script GSI...");
+            const s2 = document.createElement('script');
+            s2.src = "https://accounts.google.com/gsi/client";
+            s2.onload = () => {
+                log("GSI baixado. Inicializando...");
+                initGsi();
+            };
+            s2.onerror = () => log("ERRO FATAL: Não foi possível baixar GSI.", 'error');
+            document.body.appendChild(s2);
+        }
+
+        async function initGapi() {
+            try {
+                await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
+                gapiInited = true;
+                log("✅ GAPI Inicializado com sucesso.", 'success');
+                checkReady();
+            } catch (e) {
+                log("❌ ERRO NO GAPI: " + JSON.stringify(e.result || e), 'error');
+            }
+        }
+
+        function initGsi() {
+            try {
                 tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CLIENT_ID, scope: SCOPES, callback: '',
+                    client_id: CONFIG.clientId,
+                    scope: CONFIG.scope,
+                    callback: '' // Será definido no click
                 });
                 gsiInited = true;
-                cloud.checkAuthStatus();
-            },
-            checkAuthStatus: function() {
-                if(gapiInited && gsiInited) {
-                    document.getElementById('statusMsg').innerText = "Sistema pronto. Clique para entrar.";
-                    document.getElementById('statusMsg').classList.add('text-green-600');
-                    document.getElementById('googleLoginBtn').disabled = false;
+                log("✅ GSI Inicializado com sucesso.", 'success');
+                checkReady();
+            } catch (e) {
+                log("❌ ERRO NO GSI: " + e.message, 'error');
+            }
+        }
+
+        function checkReady() {
+            if(gapiInited && gsiInited) {
+                log("🚀 SISTEMA PRONTO PARA LOGIN.", 'success');
+                const btn = document.getElementById('googleLoginBtn');
+                btn.disabled = false;
+                btn.classList.add('animate-pulse'); // Efeito visual
+            }
+        }
+
+        // === 4. LOGIN ===
+        document.getElementById('googleLoginBtn').onclick = () => {
+            log("Botão clicado. Solicitando token...");
+            
+            tokenClient.callback = async (resp) => {
+                if (resp.error) {
+                    log("❌ ERRO DE LOGIN: " + resp.error, 'error');
+                    return;
                 }
-            },
-            login: function() {
-                if(!gapiInited || !gsiInited) return alert("Aguarde, carregando sistema...");
-                tokenClient.callback = async (resp) => {
-                    if (resp.error) throw resp;
-                    ui.showLoading(true, "Entrando...");
-                    await cloud.loadUser();
-                    await cloud.listFiles();
-                    ui.showSection('fileListSection');
-                    ui.showLoading(false);
-                };
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            },
-            loadUser: async function() {
+                log("Token recebido! Carregando usuário...", 'success');
+                await loadUser();
+                document.getElementById('appArea').classList.remove('hidden');
+                // Esconde o debug se der tudo certo pra limpar a tela
+                // document.getElementById('consoleBox').parentElement.classList.add('hidden');
+            };
+
+            // Força o prompt se estiver dando erro de popup
+            tokenClient.requestAccessToken({prompt: 'consent'});
+        };
+
+        async function loadUser() {
+            try {
                 const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                     headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
                 });
                 const user = await resp.json();
-                document.getElementById('userInfo').classList.remove('hidden');
-                document.getElementById('displayUserName').innerText = user.name;
-                document.getElementById('userPhoto').src = user.picture;
-            },
-            listFiles: async function() {
-                const container = document.getElementById('driveFilesContainer');
-                container.innerHTML = '<p>Carregando...</p>';
-                try {
-                    const res = await gapi.client.drive.files.list({
-                        'pageSize': 20, 'fields': "files(id, name)",
-                        'q': "name contains 'UNIARA_BP_' and trashed = false"
-                    });
-                    container.innerHTML = '';
-                    if(res.result.files.length > 0) {
-                        res.result.files.forEach(file => {
-                            const div = document.createElement('div');
-                            div.className = "bg-gray-50 p-4 rounded border hover:bg-blue-50 cursor-pointer flex justify-between";
-                            div.innerHTML = `<b>${file.name.replace('UNIARA_BP_', '')}</b> <span>📂</span>`;
-                            div.onclick = () => cloud.loadFile(file.id);
-                            container.appendChild(div);
-                        });
-                    } else { container.innerHTML = '<p>Nenhum plano encontrado.</p>'; }
-                } catch(e) { console.error(e); }
-            },
-            loadFile: async function(id) {
-                ui.showLoading(true, "Abrindo...");
-                try {
-                    const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
-                    currentPlan = res.result;
-                    currentFileId = id;
-                    ui.showSection('editorSection');
-                    app.goToStep(0);
-                } catch(e) { alert("Erro ao abrir."); }
-                ui.showLoading(false);
-            },
-            saveFile: async function() {
-                ui.showLoading(true, "Salvando...");
-                const name = `UNIARA_BP_${currentPlan.name}.json`;
-                const content = JSON.stringify(currentPlan);
-                const metadata = { name: name, mimeType: 'application/json' };
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([content], { type: 'application/json' }));
-                
-                const url = currentFileId 
-                    ? `https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=multipart`
-                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-                const method = currentFileId ? 'PATCH' : 'POST';
+                document.getElementById('userInfo').innerText = `Logado como: ${user.name}`;
+                log(`Usuário identificado: ${user.name}`);
+            } catch (e) { log("Erro ao pegar dados do usuário.", 'error'); }
+        }
 
-                try {
-                    await fetch(url, {
-                        method: method,
-                        headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
-                        body: form
-                    });
-                    if(!currentFileId) await cloud.listFiles();
-                    alert("Salvo!");
-                } catch(e) { alert("Erro ao salvar."); }
-                ui.showLoading(false);
-            }
-        };
-
-        // --- SISTEMA DO APP ---
+        // === 5. APP LÓGICA (Simplificada para teste) ===
         const app = {
-            setPurpose: (p) => { currentPlan.purpose = p; ui.showSection('groupSection'); },
-            addMember: () => {
-                const el = document.getElementById('newMemberEmail');
-                if(el.value) {
-                    currentPlan.members.push({ email: el.value });
-                    document.getElementById('membersList').innerHTML += `<div>${el.value}</div>`;
-                    el.value = '';
+            bypass: () => {
+                log("Modo Offline ativado.");
+                document.getElementById('appArea').classList.remove('hidden');
+            },
+            step: (num) => {
+                const title = document.getElementById('stepTitle');
+                const content = document.getElementById('stepContent');
+                
+                if(num === 1) {
+                    title.innerText = "1. Identificação";
+                    content.innerHTML = `
+                        <label class="block font-bold mb-1">Nome do Negócio</label>
+                        <input type="text" class="w-full border p-2 rounded mb-4" onchange="currentPlan.name = this.value">
+                        <label class="block font-bold mb-1">Missão</label>
+                        <textarea class="w-full border p-2 rounded h-24"></textarea>
+                    `;
+                } else if(num === 2) {
+                    title.innerText = "2. Mercado";
+                    content.innerHTML = `<p>Conteúdo de Mercado aqui...</p>`;
+                } else {
+                    title.innerText = "3. Financeiro";
+                    content.innerHTML = `<p>Conteúdo Financeiro aqui...</p>`;
                 }
             },
-            createProject: () => {
-                const name = document.getElementById('projectNameInput').value;
-                if(!name) return alert("Digite um nome!");
-                currentPlan.name = name;
-                currentPlan.data = {};
-                cloud.saveFile().then(() => { ui.showSection('editorSection'); app.goToStep(0); });
-            },
-            updateField: (field, val) => {
-                if(!currentPlan.data) currentPlan.data = {};
-                currentPlan.data[field] = val;
-            },
-            goToStep: (step) => {
-                // Atualiza abas
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('bg-blue-100', 'font-bold'));
-                const btn = document.querySelector(`[data-step="${step}"]`);
-                if(btn) btn.classList.add('bg-blue-100', 'font-bold');
+            save: async () => {
+                if(!gapi.client.getToken()) return alert("Você precisa estar logado para salvar no Drive!");
+                log("Tentando salvar arquivo...");
+                try {
+                    const fileContent = JSON.stringify(currentPlan);
+                    const file = new Blob([fileContent], {type: 'application/json'});
+                    const metadata = {
+                        'name': `UNIARA_BP_${currentPlan.name || 'SemNome'}.json`,
+                        'mimeType': 'application/json'
+                    };
 
-                // Renderiza HTML
-                const content = document.getElementById('stepContent');
-                if(step === 0) content.innerHTML = app.renderField('Identificação', 'Nome Fantasia', 'businessName') + app.renderText('Missão', 'mission');
-                else if(step === 1) content.innerHTML = app.renderText('Público Alvo', 'targetAudience') + app.renderText('Concorrentes', 'competitors');
-                else if(step === 2) content.innerHTML = app.renderText('Problema', 'problem') + app.renderText('Solução', 'solution');
-                else if(step === 3) content.innerHTML = app.renderField('Canais', 'Canais de Venda', 'channels') + app.renderText('Promoção', 'promotion');
-                else if(step === 4) content.innerHTML = app.renderText('Localização', 'location') + app.renderText('Equipe', 'team');
-                else if(step === 5) content.innerHTML = app.renderField('Financeiro', 'Investimento R$', 'investment', 'number') + app.renderField('Financeiro', 'Faturamento R$', 'revenue', 'number');
-                else content.innerHTML = '<div class="p-4 bg-gray-100 text-center">Resumo Final disponível para exportação em PDF.</div>';
+                    const formData = new FormData();
+                    formData.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+                    formData.append('file', file);
+
+                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + gapi.client.getToken().access_token },
+                        body: formData
+                    });
+                    alert("Salvo com sucesso!");
+                    log("Arquivo salvo no Drive.", 'success');
+                } catch(e) {
+                    log("Erro ao salvar: " + e.message, 'error');
+                    alert("Erro ao salvar.");
+                }
             },
-            renderField: (title, label, field, type='text') => `
-                <div class="mb-4"><h3 class="font-bold text-blue-900 mb-2">${title}</h3>
-                <label class="block text-sm font-bold mb-1">${label}</label>
-                <input type="${type}" class="w-full p-2 border rounded" value="${currentPlan.data?.[field] || ''}" onchange="app.updateField('${field}', this.value)"></div>`,
-            renderText: (label, field) => `
-                <div class="mb-4"><label class="block text-sm font-bold mb-1">${label}</label>
-                <textarea class="w-full p-2 border rounded h-24" onchange="app.updateField('${field}', this.value)">${currentPlan.data?.[field] || ''}</textarea></div>`,
-            
-            saveToCloud: () => cloud.saveFile(),
-            exportPDF: () => {
+            pdf: () => {
                 const el = document.getElementById('stepContent');
-                html2pdf().from(el).save(`Plano_${currentPlan.name}.pdf`);
+                html2pdf().from(el).save('Plano.pdf');
             }
         };
 
-        const ui = {
-            showSection: (id) => {
-                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-                document.getElementById(id).classList.remove('hidden');
-            },
-            showLoading: (show, txt) => {
-                const el = document.getElementById('loadingOverlay');
-                if(show) { el.classList.remove('hidden'); document.getElementById('loadingText').innerText = txt; }
-                else el.classList.add('hidden');
-            }
-        };
+        // Start
+        window.onload = initSystem;
 
-        const auth = {
-            logout: () => {
-                const token = gapi.client.getToken();
-                if (token) google.accounts.oauth2.revoke(token.access_token);
-                gapi.client.setToken(null);
-                ui.showSection('loginSection');
-                document.getElementById('userInfo').classList.add('hidden');
-            }
-        };
-
-        // Listeners de Botões
-        document.getElementById('googleLoginBtn').addEventListener('click', cloud.login);
-        document.getElementById('refreshFilesBtn').addEventListener('click', cloud.listFiles);
-        document.getElementById('logoutBtn').addEventListener('click', auth.logout);
     </script>
-
-    <script src="https://accounts.google.com/gsi/client" async defer onload="cloud.gsiInit()"></script>
-    <script src="https://apis.google.com/js/api.js" async defer onload="cloud.gapiInit()"></script>
-
 </body>
 </html>
