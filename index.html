@@ -1,69 +1,193 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator - Debug Mode</title>
+    <title>BP Generator - UNIARA (Cloud Integrated)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://accounts.google.com/gsi/client" async defer onload="GoogleAuth.initGsi()"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="GoogleAuth.initGapi()"></script>
 
     <style>
-        .debug-console {
-            background: #1a1a1a; color: #00ff00; 
-            font-family: 'Courier New', monospace; font-size: 13px;
-            padding: 15px; border-radius: 8px; margin-bottom: 20px;
-            height: 200px; overflow-y: auto; border: 2px solid #333;
-        }
-        .log-error { color: #ff5555; font-weight: bold; }
-        .log-warn { color: #ffff55; }
-        .log-success { color: #55ff55; font-weight: bold; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%); color: white; padding: 1.5rem; }
+        .guide-box { background-color: #e3f2fd; border-left: 4px solid #1976d2; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+        .guide-box h4 { color: #1976d2; font-weight: 600; margin-bottom: 0.5rem; }
+        .option-button { border: 2px solid #ddd; padding: 1rem; margin: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .option-button:hover { border-color: #1976d2; background-color: #f5f5f5; }
+        .option-button.selected { border-color: #1976d2; background-color: #e3f2fd; }
+        .module-button { padding: 0.75rem 1.5rem; margin: 0.5rem; border-radius: 6px; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+        .module-button.active { background-color: #1976d2; color: white; }
+        .module-button:not(.active) { background-color: #e0e0e0; color: #333; }
+        .form-section { background: white; padding: 2rem; margin: 1rem 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: none; }
+        .form-section.active { display: block; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 4px; font-size: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background-color: #1976d2; color: white; }
+        .btn-success { background-color: #2e7d32; color: white; }
         .hidden { display: none !important; }
+        
+        /* Overlay de Carregamento (Novo) */
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4">
+<body>
 
-    <div class="max-w-4xl mx-auto">
-        
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-2">🔧 Painel de Diagnóstico</h2>
-            <p class="text-sm text-gray-600 mb-4">Se o botão de login não funcionar, copie o erro abaixo e me mostre.</p>
-            
-            <div id="consoleBox" class="debug-console">
-                > Iniciando sistema...<br>
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent mb-4"></div>
+        <p id="loadingText" class="text-blue-900 font-bold">Processando...</p>
+    </div>
+
+    <div class="header">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold">BP Generator</h1>
+                <p class="text-blue-100">UNIARA - Cloud Edition</p>
             </div>
+            <div id="userInfo" class="text-right hidden">
+                <p class="text-sm">Logado como: <strong id="currentUser">...</strong></p>
+                <button onclick="GoogleAuth.logout()" class="text-xs text-red-300 underline cursor-pointer">Sair</button>
+            </div>
+        </div>
+    </div>
 
-            <div class="flex gap-4">
-                <button id="googleLoginBtn" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    Entrar com Google
-                </button>
-                <button onclick="app.bypass()" class="text-gray-500 underline text-sm">
-                    Modo Offline (Sem Google)
-                </button>
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+            <h2 class="text-2xl font-bold mb-2 text-gray-800">Bem-vindo</h2>
+            <p class="text-gray-600 mb-8">Faça login para acessar seus planos na nuvem.</p>
+            
+            <button id="gLoginBtn" class="btn btn-primary w-full flex items-center justify-center gap-2" onclick="GoogleAuth.login()">
+                <svg class="w-5 h-5" fill="white" viewBox="0 0 24 24"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .533 5.333.533 12S5.867 24 12.48 24c3.44 0 6.013-1.133 8.027-3.24 2.053-2.053 2.627-4.96 2.627-7.16 0-.52-.053-1.027-.133-1.467h-10.507z"/></svg>
+                Entrar com Google
+            </button>
+            <p id="loginStatus" class="mt-4 text-xs text-gray-400">Carregando APIs...</p>
+        </div>
+    </div>
+
+    <div id="dashboardScreen" class="hidden max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Meus Planos</h2>
+            <button class="btn btn-primary" onclick="App.showScreen('purposeScreen')">+ Novo Plano</button>
+        </div>
+        <div id="driveFilesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+    </div>
+
+    <div id="purposeScreen" class="hidden min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Finalidade do Plano</h2>
+            <div class="space-y-4 mb-8">
+                <div class="option-button" onclick="App.selectPurpose('academico')">
+                    <h3 class="font-bold text-lg mb-2">📚 Trabalho Acadêmico</h3>
+                    <p class="text-sm text-gray-600">Para TCC ou disciplina.</p>
+                </div>
+                <div class="option-button" onclick="App.selectPurpose('negocio')">
+                    <h3 class="font-bold text-lg mb-2">🚀 Novo Negócio</h3>
+                    <p class="text-sm text-gray-600">Estruturação real de empresa.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="editorScreen" class="hidden max-w-7xl mx-auto p-6">
+        
+        <div class="flex overflow-x-auto mb-6 pb-2">
+            <button class="module-button active" onclick="App.showTab('identificacao', this)">Identificação</button>
+            <button class="module-button" onclick="App.showTab('mercado', this)">Mercado</button>
+            <button class="module-button" onclick="App.showTab('marketing', this)">Marketing</button>
+            <button class="module-button" onclick="App.showTab('operacional', this)">Operacional</button>
+            <button class="module-button" onclick="App.showTab('financeiro', this)">Financeiro</button>
+        </div>
+
+        <div class="flex justify-end gap-2 mb-4">
+            <button class="btn btn-success" onclick="CloudManager.saveFile()">💾 Salvar no Drive</button>
+            <button class="btn btn-secondary" onclick="App.exportPDF()">📄 Gerar PDF</button>
+        </div>
+
+        <div id="tab-identificacao" class="form-section active">
+            <div class="guide-box">
+                <h4>🆔 Dados do Negócio</h4>
+                <p>Preencha as informações básicas da empresa.</p>
+            </div>
+            <div class="form-group">
+                <label>Nome do Projeto / Empresa</label>
+                <input type="text" id="businessName" placeholder="Ex: Tech Solutions">
+            </div>
+            <div class="form-group">
+                <label>Missão</label>
+                <textarea id="mission" placeholder="Qual o propósito da empresa?"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Visão</label>
+                <textarea id="vision" placeholder="Onde quer chegar em 5 anos?"></textarea>
             </div>
         </div>
 
-        <div id="appArea" class="hidden bg-white p-8 rounded-xl shadow-lg">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <h1 class="text-2xl font-bold text-blue-900">BP Generator UNIARA</h1>
-                <div id="userInfo" class="text-sm text-gray-500">Modo Visitante</div>
+        <div id="tab-mercado" class="form-section">
+            <div class="guide-box">
+                <h4>🎯 Análise de Mercado</h4>
+                <p>Defina quem é seu cliente e quem são seus concorrentes.</p>
             </div>
+            <div class="form-group">
+                <label>Público Alvo</label>
+                <textarea id="targetAudience" placeholder="Quem vai comprar seu produto? (Idade, local, interesses)"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Concorrentes</label>
+                <textarea id="competitors" placeholder="Quem já vende algo parecido?"></textarea>
+            </div>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <nav class="space-y-2">
-                    <button onclick="app.step(1)" class="w-full text-left p-2 rounded hover:bg-blue-50 font-medium">1. Identificação</button>
-                    <button onclick="app.step(2)" class="w-full text-left p-2 rounded hover:bg-blue-50 font-medium">2. Mercado</button>
-                    <button onclick="app.step(3)" class="w-full text-left p-2 rounded hover:bg-blue-50 font-medium">3. Financeiro</button>
-                    <div class="h-4"></div>
-                    <button onclick="app.save()" class="w-full bg-green-600 text-white p-2 rounded text-center">Salvar (Drive)</button>
-                    <button onclick="app.pdf()" class="w-full bg-gray-700 text-white p-2 rounded text-center">Gerar PDF</button>
-                </nav>
+        <div id="tab-marketing" class="form-section">
+            <div class="guide-box">
+                <h4>📢 Estratégia de Marketing</h4>
+                <p>Como você vai atrair clientes?</p>
+            </div>
+            <div class="form-group">
+                <label>Canais de Venda</label>
+                <input type="text" id="salesChannels" placeholder="Ex: Instagram, Loja Física, WhatsApp">
+            </div>
+            <div class="form-group">
+                <label>Estratégia de Promoção</label>
+                <textarea id="promotionStrategy" placeholder="Ações para divulgar a marca..."></textarea>
+            </div>
+        </div>
 
-                <div class="col-span-3 bg-gray-50 p-6 rounded-lg border">
-                    <h3 id="stepTitle" class="text-lg font-bold mb-4 text-blue-800">Bem-vindo</h3>
-                    <div id="stepContent">
-                        <p>Selecione uma etapa no menu ao lado para começar.</p>
-                    </div>
+        <div id="tab-operacional" class="form-section">
+            <div class="guide-box">
+                <h4>⚙️ Plano Operacional</h4>
+                <p>Como a empresa vai funcionar no dia a dia.</p>
+            </div>
+            <div class="form-group">
+                <label>Localização</label>
+                <input type="text" id="location" placeholder="Endereço ou Home Office">
+            </div>
+            <div class="form-group">
+                <label>Equipe Necessária</label>
+                <textarea id="teamStructure" placeholder="Quais funcionários você precisa?"></textarea>
+            </div>
+        </div>
+
+        <div id="tab-financeiro" class="form-section">
+            <div class="guide-box">
+                <h4>💰 Plano Financeiro</h4>
+                <p>Estimativas de custos e receitas.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label>Investimento Inicial (R$)</label>
+                    <input type="number" id="initialInvestment">
+                </div>
+                <div class="form-group">
+                    <label>Previsão de Faturamento Mensal (R$)</label>
+                    <input type="number" id="monthlyRevenue">
                 </div>
             </div>
         </div>
@@ -71,9 +195,8 @@
     </div>
 
     <script>
-        // === 1. CONFIGURAÇÃO ===
+        // --- 1. CONFIGURAÇÕES DO GOOGLE (Use suas credenciais aqui) ---
         const CONFIG = {
-            // SEU CLIENT ID AQUI
             clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com',
             apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo',
             scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
@@ -82,183 +205,179 @@
 
         // Estado Global
         let tokenClient;
-        let gapiInited = false;
-        let gsiInited = false;
-        let currentPlan = { name: '', data: {} };
+        let gapiInited = false, gsiInited = false;
+        let currentFileId = null;
+        let currentPlanData = { purpose: '', sections: {} };
 
-        // === 2. LOGGER VISUAL (Para você ver o erro) ===
-        function log(msg, type='info') {
-            const box = document.getElementById('consoleBox');
-            let colorClass = '';
-            if(type === 'error') colorClass = 'log-error';
-            if(type === 'success') colorClass = 'log-success';
-            
-            const time = new Date().toLocaleTimeString();
-            box.innerHTML += `<div class="${colorClass}">[${time}] ${msg}</div>`;
-            box.scrollTop = box.scrollHeight;
-            console.log(`[${type}] ${msg}`);
-        }
-
-        // === 3. INICIALIZAÇÃO SEGURA ===
-        function initSystem() {
-            // Detecta a URL atual para ajudar na configuração do Google
-            const origin = window.location.origin;
-            log(`📍 SUA ORIGEM ATUAL É: ${origin}`, 'warn');
-            log(`⚠️ Certifique-se de que EXATAMENTE esta URL (sem barra no final se não tiver aqui) está nas "Origens JavaScript Autorizadas" no Google Cloud.`);
-
-            loadScripts();
-        }
-
-        function loadScripts() {
-            log("Baixando script GAPI...");
-            const s1 = document.createElement('script');
-            s1.src = "https://apis.google.com/js/api.js";
-            s1.onload = () => {
-                log("GAPI baixado. Inicializando...");
-                gapi.load('client', initGapi);
-            };
-            s1.onerror = () => log("ERRO FATAL: Não foi possível baixar GAPI.", 'error');
-            document.body.appendChild(s1);
-
-            log("Baixando script GSI...");
-            const s2 = document.createElement('script');
-            s2.src = "https://accounts.google.com/gsi/client";
-            s2.onload = () => {
-                log("GSI baixado. Inicializando...");
-                initGsi();
-            };
-            s2.onerror = () => log("ERRO FATAL: Não foi possível baixar GSI.", 'error');
-            document.body.appendChild(s2);
-        }
-
-        async function initGapi() {
-            try {
+        // --- 2. GERENCIADOR DE AUTENTICAÇÃO ---
+        const GoogleAuth = {
+            initGapi: async () => {
                 await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
                 gapiInited = true;
-                log("✅ GAPI Inicializado com sucesso.", 'success');
-                checkReady();
-            } catch (e) {
-                log("❌ ERRO NO GAPI: " + JSON.stringify(e.result || e), 'error');
-            }
-        }
-
-        function initGsi() {
-            try {
+                GoogleAuth.checkReady();
+            },
+            initGsi: () => {
                 tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CONFIG.clientId,
-                    scope: CONFIG.scope,
-                    callback: '' // Será definido no click
+                    client_id: CONFIG.clientId, scope: CONFIG.scope, callback: ''
                 });
                 gsiInited = true;
-                log("✅ GSI Inicializado com sucesso.", 'success');
-                checkReady();
-            } catch (e) {
-                log("❌ ERRO NO GSI: " + e.message, 'error');
-            }
-        }
-
-        function checkReady() {
-            if(gapiInited && gsiInited) {
-                log("🚀 SISTEMA PRONTO PARA LOGIN.", 'success');
-                const btn = document.getElementById('googleLoginBtn');
-                btn.disabled = false;
-                btn.classList.add('animate-pulse'); // Efeito visual
-            }
-        }
-
-        // === 4. LOGIN ===
-        document.getElementById('googleLoginBtn').onclick = () => {
-            log("Botão clicado. Solicitando token...");
-            
-            tokenClient.callback = async (resp) => {
-                if (resp.error) {
-                    log("❌ ERRO DE LOGIN: " + resp.error, 'error');
-                    return;
+                GoogleAuth.checkReady();
+            },
+            checkReady: () => {
+                if (gapiInited && gsiInited) {
+                    document.getElementById('loginStatus').innerText = "Sistema Online. Pronto para acesso.";
+                    document.getElementById('loginStatus').className = "mt-4 text-xs text-green-600 font-bold";
                 }
-                log("Token recebido! Carregando usuário...", 'success');
-                await loadUser();
-                document.getElementById('appArea').classList.remove('hidden');
-                // Esconde o debug se der tudo certo pra limpar a tela
-                // document.getElementById('consoleBox').parentElement.classList.add('hidden');
-            };
-
-            // Força o prompt se estiver dando erro de popup
-            tokenClient.requestAccessToken({prompt: 'consent'});
-        };
-
-        async function loadUser() {
-            try {
+            },
+            login: () => {
+                tokenClient.callback = async (resp) => {
+                    if (resp.error) return alert(resp.error);
+                    App.showLoading(true, "Acessando Drive...");
+                    await GoogleAuth.loadUser();
+                    await CloudManager.listFiles();
+                    App.showScreen('dashboardScreen');
+                    App.showLoading(false);
+                };
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            },
+            loadUser: async () => {
                 const resp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                     headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
                 });
                 const user = await resp.json();
-                document.getElementById('userInfo').innerText = `Logado como: ${user.name}`;
-                log(`Usuário identificado: ${user.name}`);
-            } catch (e) { log("Erro ao pegar dados do usuário.", 'error'); }
-        }
-
-        // === 5. APP LÓGICA (Simplificada para teste) ===
-        const app = {
-            bypass: () => {
-                log("Modo Offline ativado.");
-                document.getElementById('appArea').classList.remove('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('currentUser').innerText = user.name;
             },
-            step: (num) => {
-                const title = document.getElementById('stepTitle');
-                const content = document.getElementById('stepContent');
-                
-                if(num === 1) {
-                    title.innerText = "1. Identificação";
-                    content.innerHTML = `
-                        <label class="block font-bold mb-1">Nome do Negócio</label>
-                        <input type="text" class="w-full border p-2 rounded mb-4" onchange="currentPlan.name = this.value">
-                        <label class="block font-bold mb-1">Missão</label>
-                        <textarea class="w-full border p-2 rounded h-24"></textarea>
-                    `;
-                } else if(num === 2) {
-                    title.innerText = "2. Mercado";
-                    content.innerHTML = `<p>Conteúdo de Mercado aqui...</p>`;
-                } else {
-                    title.innerText = "3. Financeiro";
-                    content.innerHTML = `<p>Conteúdo Financeiro aqui...</p>`;
-                }
-            },
-            save: async () => {
-                if(!gapi.client.getToken()) return alert("Você precisa estar logado para salvar no Drive!");
-                log("Tentando salvar arquivo...");
-                try {
-                    const fileContent = JSON.stringify(currentPlan);
-                    const file = new Blob([fileContent], {type: 'application/json'});
-                    const metadata = {
-                        'name': `UNIARA_BP_${currentPlan.name || 'SemNome'}.json`,
-                        'mimeType': 'application/json'
-                    };
-
-                    const formData = new FormData();
-                    formData.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
-                    formData.append('file', file);
-
-                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + gapi.client.getToken().access_token },
-                        body: formData
-                    });
-                    alert("Salvo com sucesso!");
-                    log("Arquivo salvo no Drive.", 'success');
-                } catch(e) {
-                    log("Erro ao salvar: " + e.message, 'error');
-                    alert("Erro ao salvar.");
-                }
-            },
-            pdf: () => {
-                const el = document.getElementById('stepContent');
-                html2pdf().from(el).save('Plano.pdf');
+            logout: () => {
+                const token = gapi.client.getToken();
+                if (token) google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken(null);
+                location.reload();
             }
         };
 
-        // Start
-        window.onload = initSystem;
+        // --- 3. GERENCIADOR DE NUVEM (Salvar/Abrir) ---
+        const CloudManager = {
+            listFiles: async () => {
+                const container = document.getElementById('driveFilesList');
+                container.innerHTML = '<p>Carregando...</p>';
+                try {
+                    const res = await gapi.client.drive.files.list({
+                        'pageSize': 20, 'fields': "files(id, name, modifiedTime)",
+                        'q': "name contains 'UNIARA_BP_' and trashed = false"
+                    });
+                    container.innerHTML = '';
+                    if (res.result.files.length > 0) {
+                        res.result.files.forEach(file => {
+                            const div = document.createElement('div');
+                            div.className = "bg-white p-4 rounded shadow border hover:border-blue-500 cursor-pointer transition";
+                            div.innerHTML = `
+                                <h3 class="font-bold text-blue-900">${file.name.replace('UNIARA_BP_', '').replace('.json','')}</h3>
+                                <p class="text-xs text-gray-500">Modificado: ${new Date(file.modifiedTime).toLocaleDateString()}</p>
+                            `;
+                            div.onclick = () => CloudManager.loadFile(file.id);
+                            container.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = '<p class="text-gray-500 col-span-2">Nenhum plano encontrado.</p>';
+                    }
+                } catch (e) { console.error(e); }
+            },
+            
+            // A MÁGICA DE SALVAR TUDO AUTOMATICAMENTE
+            saveFile: async () => {
+                App.showLoading(true, "Salvando...");
+                
+                // 1. Coleta dados de TODOS os inputs na tela
+                const inputs = document.querySelectorAll('input, textarea, select');
+                inputs.forEach(el => {
+                    if(el.id) currentPlanData.sections[el.id] = el.value;
+                });
 
+                // 2. Prepara o arquivo
+                const fileName = `UNIARA_BP_${currentPlanData.sections.businessName || 'SemNome'}.json`;
+                const fileContent = JSON.stringify(currentPlanData);
+                const metadata = { name: fileName, mimeType: 'application/json' };
+                
+                // 3. Envia para o Google
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([fileContent], { type: 'application/json' }));
+
+                const url = currentFileId 
+                    ? `https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=multipart`
+                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+                const method = currentFileId ? 'PATCH' : 'POST';
+
+                try {
+                    await fetch(url, {
+                        method: method,
+                        headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
+                        body: form
+                    });
+                    if(!currentFileId) await CloudManager.listFiles();
+                    alert("✅ Plano salvo com sucesso!");
+                } catch (e) { alert("Erro ao salvar: " + e.message); }
+                App.showLoading(false);
+            },
+
+            loadFile: async (id) => {
+                App.showLoading(true, "Abrindo...");
+                try {
+                    const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
+                    currentPlanData = res.result;
+                    currentFileId = id;
+                    
+                    // Preenche os campos automaticamente
+                    if(currentPlanData.sections) {
+                        Object.keys(currentPlanData.sections).forEach(key => {
+                            const el = document.getElementById(key);
+                            if(el) el.value = currentPlanData.sections[key];
+                        });
+                    }
+                    
+                    App.showScreen('editorScreen');
+                } catch (e) { alert("Erro ao abrir arquivo."); }
+                App.showLoading(false);
+            }
+        };
+
+        // --- 4. LÓGICA DE TELA (Navegação) ---
+        const App = {
+            showScreen: (id) => {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboardScreen').classList.add('hidden');
+                document.getElementById('purposeScreen').classList.add('hidden');
+                document.getElementById('editorScreen').classList.add('hidden');
+                document.getElementById(id).classList.remove('hidden');
+            },
+            selectPurpose: (type) => {
+                currentPlanData.purpose = type;
+                App.showScreen('editorScreen');
+            },
+            showTab: (tabId, btn) => {
+                document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('tab-' + tabId).classList.add('active');
+                
+                document.querySelectorAll('.module-button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            },
+            showLoading: (show, text) => {
+                const el = document.getElementById('loadingOverlay');
+                if(show) { el.classList.remove('hidden'); document.getElementById('loadingText').innerText = text; }
+                else el.classList.add('hidden');
+            },
+            exportPDF: () => {
+                // Mostra todas as abas temporariamente para o PDF pegar tudo
+                document.querySelectorAll('.form-section').forEach(s => s.style.display = 'block');
+                const element = document.getElementById('editorScreen');
+                html2pdf().from(element).save(`Plano_${currentPlanData.sections.businessName || 'Uniara'}.pdf`).then(() => {
+                    // Restaura estado original (esconde abas inativas)
+                    document.querySelectorAll('.form-section').forEach(s => s.style.display = '');
+                    document.querySelector('.form-section.active').style.display = 'block';
+                });
+            }
+        };
     </script>
 </body>
 </html>
