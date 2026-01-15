@@ -1,4 +1,4 @@
-<!-- BP Generator UNIARA - VERSÃO FINAL INTEGRADA (Cloud + Todos os Módulos) -->
+<!-- BP Generator UNIARA - VERSÃO FINAL INTEGRADA V2 (Cloud + Todos os Módulos + Correção de Inicialização Google) -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -8,8 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Correção de Inicialização: Uso de onload e callback para garantir que as bibliotecas carreguem antes de serem usadas -->
+    <script src="https://accounts.google.com/gsi/client" async defer onload="this.onload=function(){};gisInit();"></script>
+    <script src="https://apis.google.com/js/api.js" async defer callback="gapiLoaded"></script>
     <style>
         .form-section { display: none; }
         .form-section.active { display: block; }
@@ -229,22 +230,31 @@
 
         // --- MÓDULO CLOUD ---
         const cloud = {
-            init: function() {
+            // Função de inicialização do GAPI (Drive API)
+            gapiInit: function() {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
                         gapiInited = true;
-                    } catch (e) { console.error(e); }
+                        console.log("GAPI (Drive API) inicializado com sucesso.");
+                    } catch (e) { 
+                        console.error("Erro ao inicializar GAPI:", e);
+                        alert("Erro de conexão com o Google Drive. Verifique o console.");
+                    }
                 });
+            },
+            // Função de inicialização do GSI (Google Identity Services)
+            gsiInit: function() {
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
                     scope: SCOPES,
                     callback: '', 
                 });
                 gsiInited = true;
+                console.log("GSI (Login) inicializado com sucesso.");
             },
             handleAuthClick: function() {
-                if (!gsiInited) return alert('Carregando Google...');
+                if (!gsiInited || !gapiInited) return alert('Aguarde o carregamento completo do Google...');
                 tokenClient.callback = async (resp) => {
                     if (resp.error !== undefined) throw (resp);
                     ui.showLoading(true, "Conectando ao Google...");
@@ -477,6 +487,54 @@
                     </div>
                 </div>
             `,
+            renderStep2: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">💡 Problema & Proposta de Valor</h3>
+                    <p class="text-sm text-blue-700">Defina o problema que sua empresa resolve e qual o valor único que você entrega ao cliente.</p>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Problema Central</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Qual a dor principal do seu cliente?"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Proposta de Valor Única (PVU)</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="O que torna sua solução indispensável?"></textarea>
+                    </div>
+                </div>
+            `,
+            renderStep3: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">📢 Canais e Estratégia de Marketing</h3>
+                    <p class="text-sm text-blue-700">Como você vai se comunicar, vender e entregar seu produto/serviço ao cliente.</p>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Canais de Distribuição</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: E-commerce, Loja Física, Representantes."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Estratégia de Comunicação</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Como você vai atrair e reter clientes?"></textarea>
+                    </div>
+                </div>
+            `,
+            renderStep4: () => `
+                <div class="guide-box">
+                    <h3 class="font-bold text-blue-900">⚙️ Estrutura Operacional</h3>
+                    <p class="text-sm text-blue-700">Defina os recursos, processos e parcerias chave para que seu negócio funcione.</p>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Recursos Chave</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: Patentes, Software, Máquinas, Pessoas."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Atividades Chave</label>
+                        <textarea class="w-full p-3 border rounded-xl h-24 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Quais são as atividades essenciais para entregar sua proposta de valor?"></textarea>
+                    </div>
+                </div>
+            `,
             renderStep5: () => `
                 <div class="guide-box">
                     <h3 class="font-bold text-blue-900">💰 Planejamento Financeiro</h3>
@@ -593,12 +651,20 @@
 
         // Inicialização
         window.addEventListener('DOMContentLoaded', () => {
-            cloud.init();
+            // Apenas configura os listeners de clique
             document.getElementById('googleLoginBtn').addEventListener('click', cloud.handleAuthClick);
             document.getElementById('logoutBtn').addEventListener('click', auth.logout);
             document.getElementById('refreshFilesBtn').addEventListener('click', cloud.listDriveFiles);
             document.getElementById('startNewBtn').addEventListener('click', () => ui.showSection('purposeSection'));
         });
+
+        // Funções globais chamadas pelas bibliotecas do Google quando carregadas
+        window.gapiLoaded = cloud.gapiInit;
+        window.gisInit = cloud.gsiInit;
+
+        // A inicialização do GAPI e GSI agora é controlada pelos atributos 'onload' nos scripts no <head>.
+        // O GSI (Google Identity Services) é inicializado por gisInit() quando o script carrega.
+        // O GAPI (Google API Client) é inicializado por gapiLoaded() quando o script carrega.
     </script>
 </body>
 </html>
