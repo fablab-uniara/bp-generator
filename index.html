@@ -3,238 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator UNIARA - Final</title>
+    <title>BP Generator - UNIARA</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://accounts.google.com/gsi/client" async defer onload="Google.initGsi()"></script>
+    <script src="https://apis.google.com/js/api.js" async defer onload="Google.initGapi()"></script>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f3f4f6; }
+        /* --- SEU CSS ORIGINAL (PRESERVADO) --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
         
-        /* Loading e Erros */
-        #loadingOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        /* Seu Header Gradiente */
+        .header { background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%); color: white; padding: 1.5rem; }
+        
+        /* Seus Guide Boxes */
+        .guide-box { background-color: #e3f2fd; border-left: 4px solid #1976d2; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+        .guide-box h4 { color: #1976d2; font-weight: 600; margin-bottom: 0.5rem; }
+        
+        /* Seus Botões de Opção */
+        .option-button { border: 2px solid #ddd; padding: 1rem; margin: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; background: white; }
+        .option-button:hover { border-color: #1976d2; background-color: #f5f5f5; }
+        .option-button.selected { border-color: #1976d2; background-color: #e3f2fd; }
+        
+        /* Navegação de Abas */
+        .nav-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+        .nav-tab { padding: 10px 20px; background: #e0e0e0; border-radius: 5px; cursor: pointer; white-space: nowrap; font-weight: bold; color: #555; }
+        .nav-tab.active { background: #1976d2; color: white; }
+        
+        /* Formulários */
+        .form-section { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-section.active { display: block; animation: fadeIn 0.3s; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        /* Loading Overlay */
+        #loadingOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
-        
-        /* Navegação */
-        .sidebar-btn { width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 4px; border-radius: 6px; color: #4b5563; }
-        .sidebar-btn:hover { background-color: #e5e7eb; color: #1e3a8a; }
-        .sidebar-btn.active { background-color: #1e3a8a; color: white; border-left: 4px solid #60a5fa; }
-        
-        /* Inputs */
-        .input-box { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-top: 5px; }
-        .input-box:focus { border-color: #1e3a8a; outline: none; ring: 2px solid #93c5fd; }
-        
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <div id="spinner" class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-900 mb-4"></div>
-        <h2 id="loadingTitle" class="text-xl font-bold text-blue-900">Iniciando Sistema...</h2>
-        <p id="loadingStatus" class="text-gray-500 text-sm mt-2">Baixando bibliotecas do Google...</p>
-        
-        <button id="retryBtn" onclick="window.location.reload()" class="hidden mt-6 bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
-            Recarregar Página
-        </button>
-        <div id="errorLog" class="hidden mt-4 p-4 bg-red-100 text-red-800 text-xs rounded max-w-lg text-left font-mono border border-red-300"></div>
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent mb-4"></div>
+        <h2 id="loadingText" class="text-xl font-bold text-blue-900">Iniciando Sistema...</h2>
+        <div id="errorLog" class="mt-4 text-red-500 text-sm hidden"></div>
     </div>
 
-    <section id="screen-login" class="hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700 p-4">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">BP Generator</h1>
-            <p class="text-gray-500 mb-8">UNIARA - Cloud Edition</p>
-            
-            <button id="btnLogin" onclick="Google.login()" disabled class="w-full bg-gray-200 text-gray-400 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition cursor-not-allowed">
-                <span>Carregando Google...</span>
+    <div class="header shadow-lg">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">BP Generator</h1>
+                <p class="text-blue-200 text-sm">UNIARA - Planejamento de Negócios</p>
+            </div>
+            <div id="userDisplay" class="hidden text-right text-sm">
+                <span id="userName">Usuário</span>
+                <br>
+                <button onclick="Google.logout()" class="text-red-200 hover:text-white underline text-xs">Sair</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginScreen" class="hidden min-h-[80vh] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Acesso ao Sistema</h2>
+            <div class="guide-box text-left">
+                <h4>🔐 Login Institucional</h4>
+                <p class="text-sm">Para salvar seus projetos na nuvem, faça login com sua conta Google.</p>
+            </div>
+            <button id="googleBtn" onclick="Google.login()" class="w-full bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-700 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                <span>Entrar com Google</span>
             </button>
-            <p class="text-xs text-gray-400 mt-4">Certifique-se de permitir Pop-ups.</p>
         </div>
-    </section>
+    </div>
 
-    <section id="screen-dashboard" class="hidden min-h-screen bg-gray-50">
-        <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between">
-            <h1 class="font-bold text-xl">Meus Projetos</h1>
-            <div class="flex items-center gap-4">
-                <span id="userNameDisplay">...</span>
-                <button onclick="Google.logout()" class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Sair</button>
+    <div id="dashboardScreen" class="hidden max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-700">Meus Planos</h2>
+            <button onclick="App.newPlan()" class="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 font-bold transition">+ Novo Projeto</button>
+        </div>
+        <div id="fileList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             </div>
-        </header>
-        <main class="max-w-7xl mx-auto p-6">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">Seus Planos</h2>
-                <button onclick="App.newPlan()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">+ Novo Plano</button>
-            </div>
-            <div id="fileList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-        </main>
-    </section>
+    </div>
 
-    <section id="screen-editor" class="hidden min-h-screen flex flex-col h-screen">
-        <header class="bg-white border-b px-6 py-3 flex justify-between items-center shrink-0">
-            <div class="flex items-center gap-3">
-                <button onclick="App.showScreen('screen-dashboard')" class="text-gray-400 hover:text-blue-900">← Voltar</button>
-                <div class="h-6 w-px bg-gray-300"></div>
-                <h1 class="font-bold text-lg text-blue-900" id="projectTitleDisplay">Novo Projeto</h1>
+    <div id="purposeScreen" class="hidden max-w-4xl mx-auto p-6 mt-10">
+        <h2 class="text-2xl font-bold text-center mb-8 text-gray-700">Qual o objetivo do seu plano?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="option-button" onclick="App.selectPurpose('academico')">
+                <h3 class="font-bold text-lg mb-2 text-blue-900">📚 Trabalho Acadêmico</h3>
+                <p class="text-gray-600">Estrutura focada em TCC e projetos disciplinares da Uniara.</p>
             </div>
+            <div class="option-button" onclick="App.selectPurpose('negocio')">
+                <h3 class="font-bold text-lg mb-2 text-blue-900">🚀 Novo Negócio</h3>
+                <p class="text-gray-600">Estrutura completa para abertura de empresas reais.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="editorScreen" class="hidden max-w-7xl mx-auto p-6">
+        
+        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded shadow-sm">
+            <h2 class="font-bold text-xl text-gray-700" id="projectTitle">Novo Plano</h2>
             <div class="flex gap-2">
-                <span id="saveStatus" class="text-xs text-gray-400 self-center mr-2"></span>
-                <button onclick="Cloud.saveManual()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">💾 Salvar</button>
-                <button onclick="App.exportPDF()" class="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800">📄 PDF</button>
+                <button onclick="App.showScreen('dashboardScreen')" class="px-4 py-2 text-gray-500 hover:text-gray-700">Voltar</button>
+                <button onclick="Cloud.saveManual()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 shadow">💾 Salvar</button>
+                <button onclick="App.exportPDF()" class="bg-gray-700 text-white px-6 py-2 rounded font-bold hover:bg-gray-800 shadow">📄 PDF</button>
             </div>
-        </header>
-
-        <div class="flex flex-1 overflow-hidden">
-            <aside class="w-64 bg-white border-r p-4 overflow-y-auto shrink-0 flex flex-col gap-1">
-                <button class="sidebar-btn active" onclick="App.openTab('tab-executivo', this)">1. Resumo Executivo</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-mercado', this)">2. Mercado</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-marketing', this)">3. Marketing</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-operacional', this)">4. Operacional</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-financeiro', this)">5. Financeiro</button>
-            </aside>
-
-            <main class="flex-1 overflow-y-auto p-8 bg-gray-50" id="pdfContent">
-                
-                <div id="tab-executivo" class="tab-content active">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Identificação</h2>
-                    <div class="space-y-4 max-w-3xl">
-                        <div><label>Nome da Empresa</label><input type="text" id="campo_nome" class="input-box"></div>
-                        <div><label>Missão</label><textarea id="campo_missao" rows="3" class="input-box"></textarea></div>
-                        <div><label>Visão</label><textarea id="campo_visao" rows="3" class="input-box"></textarea></div>
-                    </div>
-                </div>
-
-                <div id="tab-mercado" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Mercado</h2>
-                    <div class="space-y-4 max-w-3xl">
-                        <div><label>Público Alvo</label><textarea id="campo_publico" rows="4" class="input-box"></textarea></div>
-                        <div><label>Concorrentes</label><textarea id="campo_concorrentes" rows="4" class="input-box"></textarea></div>
-                    </div>
-                </div>
-
-                <div id="tab-marketing" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Marketing (4Ps)</h2>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label>Produto</label><textarea id="campo_produto" rows="4" class="input-box"></textarea></div>
-                        <div><label>Preço</label><textarea id="campo_preco" rows="4" class="input-box"></textarea></div>
-                        <div><label>Praça</label><textarea id="campo_praca" rows="4" class="input-box"></textarea></div>
-                        <div><label>Promoção</label><textarea id="campo_promo" rows="4" class="input-box"></textarea></div>
-                    </div>
-                </div>
-
-                <div id="tab-operacional" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Operacional</h2>
-                    <div class="space-y-4">
-                        <div><label>Estrutura Física</label><textarea id="campo_estrutura" rows="3" class="input-box"></textarea></div>
-                        <div><label>Equipe</label><textarea id="campo_equipe" rows="3" class="input-box"></textarea></div>
-                    </div>
-                </div>
-
-                <div id="tab-financeiro" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Financeiro</h2>
-                    <div class="space-y-4 max-w-md">
-                        <div><label>Investimento Inicial (R$)</label><input type="number" id="campo_inv_inicial" class="input-box"></div>
-                        <div><label>Faturamento Mensal Previsto (R$)</label><input type="number" id="campo_faturamento" class="input-box"></div>
-                        <div><label>Custos Totais Mensais (R$)</label><input type="number" id="campo_custos" class="input-box"></div>
-                        <div class="p-4 bg-blue-100 rounded">
-                            <label class="font-bold">Lucro Estimado:</label>
-                            <input type="text" id="campo_lucro" class="input-box font-bold" readonly value="R$ 0,00">
-                        </div>
-                        <button onclick="App.calcLucro()" class="bg-blue-600 text-white w-full py-2 rounded font-bold">Calcular</button>
-                    </div>
-                </div>
-
-            </main>
         </div>
-    </section>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="App.openTab('identificacao', this)">Identificação</button>
+            <button class="nav-tab" onclick="App.openTab('mercado', this)">Mercado</button>
+            <button class="nav-tab" onclick="App.openTab('marketing', this)">Marketing</button>
+            <button class="nav-tab" onclick="App.openTab('operacional', this)">Operacional</button>
+            <button class="nav-tab" onclick="App.openTab('financeiro', this)">Financeiro</button>
+        </div>
+
+        <div id="content-area">
+            
+            <div id="tab-identificacao" class="form-section active">
+                <div class="guide-box">
+                    <h4>🆔 Dados do Empreendimento</h4>
+                    <p>Defina a identidade da empresa.</p>
+                </div>
+                <div class="form-group">
+                    <label>Nome do Projeto / Empresa</label>
+                    <input type="text" id="campo_nome" class="form-control" placeholder="Digite o nome...">
+                </div>
+                <div class="form-group">
+                    <label>Missão</label>
+                    <textarea id="campo_missao" rows="3" class="form-control" placeholder="Propósito da empresa..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Visão</label>
+                    <textarea id="campo_visao" rows="3" class="form-control" placeholder="Onde quer chegar..."></textarea>
+                </div>
+            </div>
+
+            <div id="tab-mercado" class="form-section">
+                <div class="guide-box">
+                    <h4>🎯 Análise de Mercado</h4>
+                    <p>Conheça seu cliente e concorrentes.</p>
+                </div>
+                <div class="form-group">
+                    <label>Público Alvo</label>
+                    <textarea id="campo_publico" rows="4" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Concorrentes</label>
+                    <textarea id="campo_concorrentes" rows="4" class="form-control"></textarea>
+                </div>
+            </div>
+
+            <div id="tab-marketing" class="form-section">
+                <div class="guide-box">
+                    <h4>📢 Plano de Marketing (4Ps)</h4>
+                    <p>Como você vai vender?</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group"><label>Produto</label><textarea id="campo_produto" rows="3" class="form-control"></textarea></div>
+                    <div class="form-group"><label>Preço</label><textarea id="campo_preco" rows="3" class="form-control"></textarea></div>
+                    <div class="form-group"><label>Praça (Local)</label><textarea id="campo_praca" rows="3" class="form-control"></textarea></div>
+                    <div class="form-group"><label>Promoção</label><textarea id="campo_promocao" rows="3" class="form-control"></textarea></div>
+                </div>
+            </div>
+
+            <div id="tab-operacional" class="form-section">
+                <div class="guide-box">
+                    <h4>⚙️ Plano Operacional</h4>
+                    <p>Como vai funcionar na prática?</p>
+                </div>
+                <div class="form-group"><label>Estrutura Física</label><textarea id="campo_estrutura" rows="3" class="form-control"></textarea></div>
+                <div class="form-group"><label>Equipe Necessária</label><textarea id="campo_equipe" rows="3" class="form-control"></textarea></div>
+            </div>
+
+            <div id="tab-financeiro" class="form-section">
+                <div class="guide-box">
+                    <h4>💰 Viabilidade Financeira</h4>
+                    <p>Estimativas de custos e lucros.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group"><label>Investimento Inicial (R$)</label><input type="number" id="campo_investimento" class="form-control"></div>
+                    <div class="form-group"><label>Faturamento Mensal (R$)</label><input type="number" id="campo_faturamento" class="form-control"></div>
+                </div>
+                <div class="form-group">
+                    <label>Custos Fixos Mensais (R$)</label>
+                    <input type="number" id="campo_custos" class="form-control">
+                </div>
+                <div class="p-4 bg-gray-100 rounded text-center">
+                    <label class="font-bold text-gray-700">Resultado Estimado:</label>
+                    <input type="text" id="campo_resultado" readonly class="text-center w-full bg-transparent font-bold text-xl text-blue-800 border-none" value="R$ 0,00">
+                    <button onclick="App.calcFinanceiro()" class="mt-2 text-sm text-blue-600 underline">Calcular Agora</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 
     <script>
-        // CONFIGURAÇÕES (Use as suas)
+        // --- 1. CONFIGURAÇÕES ---
         const CONFIG = {
             clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com',
-            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo', // Verifique se essa chave está correta!
+            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo',
             scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
             discovery: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
         };
 
-        // VARIÁVEIS GLOBAIS
-        let tokenClient;
-        let gapiInited = false;
-        let gsiInited = false;
-        let currentFileId = null;
+        // Estado
+        let tokenClient, gapiInited = false, gsiInited = false, currentFileId = null;
 
-        // === 1. INICIALIZADOR SEGURO (O SEGREDO ESTÁ AQUI) ===
-        function loadGoogleLibraries() {
-            // Loader GAPI
-            const scriptGapi = document.createElement('script');
-            scriptGapi.src = "https://apis.google.com/js/api.js";
-            scriptGapi.onload = () => {
-                gapi.load('client', async () => {
-                    try {
-                        await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
-                        gapiInited = true;
-                        checkAuthReady();
-                    } catch (e) { showError("Erro ao iniciar GAPI (API Key inválida?): " + JSON.stringify(e)); }
-                });
-            };
-            scriptGapi.onerror = () => showError("Falha ao baixar script GAPI.");
-            document.body.appendChild(scriptGapi);
-
-            // Loader GSI (Identity)
-            const scriptGsi = document.createElement('script');
-            scriptGsi.src = "https://accounts.google.com/gsi/client";
-            scriptGsi.onload = () => {
+        // --- 2. GOOGLE AUTH ---
+        const Google = {
+            initGapi: async () => {
+                try {
+                    await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
+                    gapiInited = true; Google.checkReady();
+                } catch(e) { console.error(e); }
+            },
+            initGsi: () => {
                 try {
                     tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CONFIG.clientId, scope: CONFIG.scope, callback: ''
                     });
-                    gsiInited = true;
-                    checkAuthReady();
-                } catch (e) { showError("Erro ao iniciar GSI (Client ID inválido?): " + e); }
-            };
-            scriptGsi.onerror = () => showError("Falha ao baixar script GSI.");
-            document.body.appendChild(scriptGsi);
-        }
-
-        function checkAuthReady() {
-            if (gapiInited && gsiInited) {
-                // TUDO PRONTO
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('screen-login').classList.remove('hidden');
-                
-                const btn = document.getElementById('btnLogin');
-                btn.disabled = false;
-                btn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-not-allowed');
-                btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-50', 'border', 'border-gray-300');
-                btn.innerHTML = `<img src="https://www.google.com/favicon.ico" class="w-5 h-5"> <span>Entrar com Google</span>`;
-            } else {
-                document.getElementById('loadingStatus').innerText = `GAPI: ${gapiInited ? 'OK' : '...'} | GSI: ${gsiInited ? 'OK' : '...'}`;
-            }
-        }
-
-        function showError(msg) {
-            const log = document.getElementById('errorLog');
-            log.classList.remove('hidden');
-            log.innerText = msg;
-            document.getElementById('retryBtn').classList.remove('hidden');
-            document.getElementById('spinner').classList.add('hidden');
-            document.getElementById('loadingTitle').innerText = "Erro na Conexão";
-            document.getElementById('loadingTitle').classList.add('text-red-600');
-        }
-
-        // === 2. GOOGLE LOGIC ===
-        const Google = {
+                    gsiInited = true; Google.checkReady();
+                } catch(e) { console.error(e); }
+            },
+            checkReady: () => {
+                if (gapiInited && gsiInited) {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                }
+            },
             login: () => {
                 tokenClient.callback = async (resp) => {
                     if (resp.error) return alert(resp.error);
-                    showLoading(true, "Acessando Drive...");
-                    try {
-                        await Google.loadUser();
-                        await Cloud.listFiles();
-                        App.showScreen('screen-dashboard');
-                    } catch(e) { alert("Erro pós-login: " + e); }
-                    showLoading(false);
+                    App.loading(true, "Entrando...");
+                    await Google.loadUser();
+                    await Cloud.listFiles();
+                    App.showScreen('dashboardScreen');
+                    App.loading(false);
                 };
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             },
@@ -243,7 +258,8 @@
                     headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
                 });
                 const user = await res.json();
-                document.getElementById('userNameDisplay').innerText = `Olá, ${user.given_name}`;
+                document.getElementById('userDisplay').classList.remove('hidden');
+                document.getElementById('userName').innerText = user.name;
             },
             logout: () => {
                 const token = gapi.client.getToken();
@@ -252,38 +268,42 @@
             }
         };
 
-        // === 3. CLOUD LOGIC ===
+        // --- 3. CLOUD MANAGER ---
         const Cloud = {
             listFiles: async () => {
-                const container = document.getElementById('fileList');
-                container.innerHTML = '<p class="col-span-3 text-center">Buscando...</p>';
+                const list = document.getElementById('fileList');
+                list.innerHTML = '<p class="text-gray-500">Carregando...</p>';
                 try {
                     const res = await gapi.client.drive.files.list({
                         pageSize: 20, fields: "files(id, name, modifiedTime)",
                         q: "name contains 'UNIARA_BP_' and trashed = false"
                     });
-                    container.innerHTML = '';
-                    if (res.result.files.length === 0) {
-                        container.innerHTML = '<p class="col-span-3 text-center text-gray-400">Nenhum projeto encontrado.</p>';
+                    list.innerHTML = '';
+                    const files = res.result.files;
+                    if (files.length === 0) {
+                        list.innerHTML = '<p class="col-span-3 text-center p-8 bg-white rounded text-gray-500">Nenhum projeto. Crie um novo!</p>';
                         return;
                     }
-                    res.result.files.forEach(file => {
-                        const name = file.name.replace('UNIARA_BP_', '').replace('.json', '');
-                        const div = document.createElement('div');
-                        div.className = "bg-white p-6 rounded shadow cursor-pointer hover:border-blue-500 border border-transparent transition";
-                        div.innerHTML = `<h3 class="font-bold text-lg text-blue-900">${name}</h3><p class="text-xs text-gray-500">Abrir Projeto →</p>`;
-                        div.onclick = () => Cloud.loadFile(file.id);
-                        container.appendChild(div);
+                    files.forEach(f => {
+                        const name = f.name.replace('UNIARA_BP_', '').replace('.json', '');
+                        const card = document.createElement('div');
+                        card.className = "bg-white p-6 rounded shadow border-l-4 border-blue-500 cursor-pointer hover:shadow-lg transition";
+                        card.innerHTML = `<h3 class="font-bold text-lg text-gray-800">${name}</h3><p class="text-xs text-gray-500 mt-2">Clique para abrir</p>`;
+                        card.onclick = () => Cloud.loadFile(f.id);
+                        list.appendChild(card);
                     });
-                } catch (e) { container.innerHTML = '<p class="text-red-500">Erro ao listar arquivos.</p>'; }
+                } catch(e) { list.innerHTML = "Erro ao listar."; }
             },
             saveManual: async () => {
-                showLoading(true, "Salvando...");
+                App.loading(true, "Salvando...");
+                // COLETA INTELIGENTE: Pega qualquer input que comece com "campo_"
                 const data = {};
                 document.querySelectorAll('[id^="campo_"]').forEach(el => data[el.id] = el.value);
                 
-                const projName = document.getElementById('campo_nome').value || 'SemNome';
-                const metadata = { name: `UNIARA_BP_${projName}.json`, mimeType: 'application/json' };
+                const projName = document.getElementById('campo_nome').value || 'Sem Nome';
+                const fileName = `UNIARA_BP_${projName}.json`;
+                
+                const metadata = { name: fileName, mimeType: 'application/json' };
                 const file = new Blob([JSON.stringify(data)], {type: 'application/json'});
                 const form = new FormData();
                 form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
@@ -301,85 +321,79 @@
                         body: form
                     });
                     const json = await req.json();
-                    if(!currentFileId) currentFileId = json.id;
-                    document.getElementById('saveStatus').innerText = "Salvo: " + new Date().toLocaleTimeString();
+                    if(!currentFileId) currentFileId = json.id; // Salva ID se for novo
+                    alert("✅ Salvo com sucesso!");
                     if(!currentFileId) await Cloud.listFiles();
-                } catch(e) { alert("Erro ao salvar: " + e); }
-                showLoading(false);
+                } catch(e) { alert("Erro ao salvar."); }
+                App.loading(false);
             },
             loadFile: async (id) => {
-                showLoading(true, "Abrindo...");
+                App.loading(true, "Abrindo...");
                 currentFileId = id;
                 try {
                     const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
                     const data = res.result;
+                    // Preenche campos
                     Object.keys(data).forEach(k => {
                         const el = document.getElementById(k);
                         if(el) el.value = data[k];
                     });
-                    document.getElementById('projectTitleDisplay').innerText = data['campo_nome'] || 'Projeto';
-                    App.showScreen('screen-editor');
+                    document.getElementById('projectTitle').innerText = data['campo_nome'] || 'Projeto';
+                    App.showScreen('editorScreen');
+                    App.calcFinanceiro();
                 } catch(e) { alert("Erro ao abrir."); }
-                showLoading(false);
+                App.loading(false);
             }
         };
 
-        // === 4. APP UI ===
+        // --- 4. APP LOGIC (Seu Workflow) ---
         const App = {
+            loading: (show, msg) => {
+                const el = document.getElementById('loadingOverlay');
+                if(show) { el.classList.remove('hidden'); document.getElementById('loadingText').innerText = msg; }
+                else el.classList.add('hidden');
+            },
             showScreen: (id) => {
-                ['screen-login', 'screen-dashboard', 'screen-editor'].forEach(s => document.getElementById(s).classList.add('hidden'));
+                ['loginScreen', 'dashboardScreen', 'purposeScreen', 'editorScreen'].forEach(s => document.getElementById(s).classList.add('hidden'));
                 document.getElementById(id).classList.remove('hidden');
             },
             newPlan: () => {
                 currentFileId = null;
-                document.querySelectorAll('input, textarea').forEach(el => el.value = '');
-                document.getElementById('projectTitleDisplay').innerText = "Novo Projeto";
-                App.showScreen('screen-editor');
+                document.querySelectorAll('input, textarea').forEach(el => el.value = ''); // Limpa
+                App.showScreen('purposeScreen');
+            },
+            selectPurpose: (type) => {
+                // Aqui você pode personalizar o formulário baseado no tipo, se quiser
+                App.showScreen('editorScreen');
+                App.openTab('identificacao', document.querySelector('.nav-tab'));
             },
             openTab: (tabId, btn) => {
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                document.getElementById(tabId).classList.add('active');
-                document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+                document.getElementById('tab-' + tabId).classList.add('active');
+                document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+                if(btn) btn.classList.add('active');
             },
-            calcLucro: () => {
+            calcFinanceiro: () => {
                 const fat = parseFloat(document.getElementById('campo_faturamento').value) || 0;
-                const cust = parseFloat(document.getElementById('campo_custos').value) || 0;
-                const lucro = fat - cust;
-                document.getElementById('campo_lucro').value = lucro.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+                const cus = parseFloat(document.getElementById('campo_custos').value) || 0;
+                const res = fat - cus;
+                document.getElementById('campo_resultado').value = res.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
             },
             exportPDF: () => {
-                const el = document.getElementById('pdfContent');
-                const tabs = document.querySelectorAll('.tab-content');
-                tabs.forEach(t => t.style.display = 'block');
-                html2pdf().from(el).save('PlanoNegocios.pdf').then(() => {
-                    tabs.forEach(t => t.style.display = '');
-                    document.querySelector('.tab-content.active').style.display = 'block';
+                const content = document.getElementById('content-area');
+                // Truque: Mostrar todas as abas para o PDF
+                document.querySelectorAll('.form-section').forEach(s => s.style.display = 'block');
+                
+                html2pdf().from(content).save('PlanoNegocio.pdf').then(() => {
+                    // Voltar ao normal
+                    document.querySelectorAll('.form-section').forEach(s => s.style.display = '');
+                    document.querySelector('.form-section.active').style.display = 'block';
                 });
             }
         };
 
-        function showLoading(show, msg) {
-            const el = document.getElementById('loadingOverlay');
-            if(show) {
-                el.classList.remove('hidden');
-                document.getElementById('loadingStatus').innerText = msg;
-                document.getElementById('spinner').classList.remove('hidden');
-            } else {
-                el.classList.add('hidden');
-            }
-        }
-
-        // STARTUP
-        window.onload = loadGoogleLibraries;
-
-        // TIMEOUT DE SEGURANÇA (Se travar por 8 segundos, avisa)
-        setTimeout(() => {
-            const overlay = document.getElementById('loadingOverlay');
-            if(!overlay.classList.contains('hidden') && !gapiInited) {
-                showError("Tempo limite excedido. O Google não respondeu. Verifique sua conexão ou se a API Key está correta.");
-            }
-        }, 8000);
+        // Auto-cálculo ao digitar
+        document.getElementById('tab-financeiro').addEventListener('input', App.calcFinanceiro);
 
     </script>
 </body>
