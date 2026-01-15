@@ -1,4 +1,4 @@
-<!-- BP Generator UNIARA - Versão v3 Infalível -->
+<!-- BP Generator UNIARA - Versão v4 Final -->
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -50,6 +50,7 @@
                 <h2 class="text-2xl font-bold text-gray-800">Portal UNIARA</h2>
                 <p class="text-gray-500 mt-2 text-sm">Acesse para colaboração em tempo real</p>
             </div>
+            <!-- REMOVIDO ONCLICK INLINE PARA EVITAR ERRO DE REFERÊNCIA -->
             <button id="googleLoginBtn" class="w-full flex items-center justify-center space-x-3 bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-700 font-bold py-4 rounded-xl transition-all duration-300">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6" alt="">
                 <span>Entrar com Google UNIARA</span>
@@ -60,14 +61,14 @@
             <div class="bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-2xl font-bold text-gray-800">Seus Projetos no Drive</h2>
-                    <button onclick="ui.showSection('purposeSection')" class="btn-primary"> + Novo Plano </button>
+                    <button id="newPlanBtn" class="btn-primary"> + Novo Plano </button>
                 </div>
                 <div id="driveFilesContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     <p class="text-center text-gray-400 py-8">Buscando arquivos...</p>
                 </div>
                 <div class="mt-8 pt-6 border-t flex justify-between items-center">
-                    <button onclick="cloud.listDriveFiles()" class="text-blue-600 text-sm font-bold hover:underline">🔄 Atualizar Lista</button>
-                    <button onclick="auth.logout()" class="text-red-500 text-sm font-bold hover:underline">Sair da Conta</button>
+                    <button id="refreshFilesBtn" class="text-blue-600 text-sm font-bold hover:underline">🔄 Atualizar Lista</button>
+                    <button id="logoutBtn" class="text-red-500 text-sm font-bold hover:underline">Sair da Conta</button>
                 </div>
             </div>
         </section>
@@ -85,15 +86,14 @@
         let gapiInited = false;
         let gsiInited = false;
 
-        // Definindo o objeto cloud ANTES de qualquer uso
+        // Funções globais para evitar erros de escopo
         const cloud = {
             init: function() {
                 gapi.load('client', async () => {
                     try {
                         await gapi.client.init({ apiKey: API_KEY, discoveryDocs: DISCOVERY_DOCS });
                         gapiInited = true;
-                        console.log("GAPI Inited");
-                    } catch (e) { console.error("GAPI Init Error", e); }
+                    } catch (e) { console.error(e); }
                 });
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: CLIENT_ID,
@@ -101,10 +101,9 @@
                     callback: '', 
                 });
                 gsiInited = true;
-                console.log("GSI Inited");
             },
             handleAuthClick: function() {
-                if (!gsiInited || !tokenClient) return alert('Aguarde o carregamento do Google...');
+                if (!gsiInited) return alert('Carregando Google...');
                 tokenClient.callback = async (resp) => {
                     if (resp.error !== undefined) throw (resp);
                     await cloud.loadUserProfile();
@@ -138,7 +137,7 @@
                             const div = document.createElement('div');
                             div.className = "p-4 border rounded-xl hover:bg-blue-50 cursor-pointer transition flex justify-between items-center group";
                             div.innerHTML = `<div><p class="font-bold text-gray-800">${file.name}</p></div><span class="text-blue-400">Abrir →</span>`;
-                            div.onclick = () => alert('Abrindo arquivo: ' + file.id);
+                            div.onclick = () => alert('Abrindo: ' + file.id);
                             container.appendChild(div);
                         });
                     } else {
@@ -153,8 +152,7 @@
         const ui = {
             showSection: function(id) {
                 document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-                const target = document.getElementById(id);
-                if (target) target.classList.remove('hidden');
+                document.getElementById(id).classList.remove('hidden');
             }
         };
 
@@ -170,15 +168,19 @@
             }
         };
 
-        // Inicialização robusta
+        // Inicialização via Event Listeners (Mais seguro)
         window.addEventListener('load', function() {
             cloud.init();
+            
+            // Atribuição de eventos via ID
             const loginBtn = document.getElementById('googleLoginBtn');
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function() {
-                    cloud.handleAuthClick();
-                });
-            }
+            if (loginBtn) loginBtn.addEventListener('click', cloud.handleAuthClick);
+            
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', auth.logout);
+            
+            const refreshBtn = document.getElementById('refreshFilesBtn');
+            if (refreshBtn) refreshBtn.addEventListener('click', cloud.listDriveFiles);
         });
     </script>
 </body>
