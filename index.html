@@ -3,303 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BP Generator UNIARA - Completo</title>
+    <title>BP Generator UNIARA - Final</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <script src="https://accounts.google.com/gsi/client" async defer onload="Google.initGsi()"></script>
-    <script src="https://apis.google.com/js/api.js" async defer onload="Google.initGapi()"></script>
 
     <style>
-        /* SEU DESIGN ORIGINAL + AJUSTES */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f3f4f6; }
         
-        /* Loading Overlay */
-        #loadingOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        /* Loading e Erros */
+        #loadingOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .hidden { display: none !important; }
         
-        /* Navegação Lateral e Abas */
-        .sidebar-btn { width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 4px; border-radius: 6px; transition: all 0.2s; color: #4b5563; font-weight: 500; }
+        /* Navegação */
+        .sidebar-btn { width: 100%; text-align: left; padding: 12px 16px; margin-bottom: 4px; border-radius: 6px; color: #4b5563; }
         .sidebar-btn:hover { background-color: #e5e7eb; color: #1e3a8a; }
         .sidebar-btn.active { background-color: #1e3a8a; color: white; border-left: 4px solid #60a5fa; }
         
-        /* Conteúdo das Abas */
-        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
-        .tab-content.active { display: block; }
-        
-        /* Caixas de Texto e Inputs */
-        .input-box { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-top: 5px; transition: border 0.3s; }
+        /* Inputs */
+        .input-box { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; margin-top: 5px; }
         .input-box:focus { border-color: #1e3a8a; outline: none; ring: 2px solid #93c5fd; }
-        label { font-weight: 600; color: #374151; font-size: 0.95rem; }
         
-        /* Destaques */
-        .guide-box { background: #eff6ff; border-left: 4px solid #2563eb; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-        .guide-title { color: #1e40af; font-weight: bold; margin-bottom: 5px; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="text-gray-800">
+<body>
 
     <div id="loadingOverlay">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-900 mb-4"></div>
-        <h2 class="text-xl font-bold text-blue-900">Carregando Sistema...</h2>
-        <p id="loadingStatus" class="text-gray-500 text-sm mt-2">Conectando ao Google...</p>
+        <div id="spinner" class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-900 mb-4"></div>
+        <h2 id="loadingTitle" class="text-xl font-bold text-blue-900">Iniciando Sistema...</h2>
+        <p id="loadingStatus" class="text-gray-500 text-sm mt-2">Baixando bibliotecas do Google...</p>
+        
+        <button id="retryBtn" onclick="window.location.reload()" class="hidden mt-6 bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
+            Recarregar Página
+        </button>
+        <div id="errorLog" class="hidden mt-4 p-4 bg-red-100 text-red-800 text-xs rounded max-w-lg text-left font-mono border border-red-300"></div>
     </div>
 
-    <section id="screen-login" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700 p-4">
+    <section id="screen-login" class="hidden min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700 p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
-            <div class="mb-6">
-                <span class="text-6xl">🎓</span>
-            </div>
             <h1 class="text-3xl font-bold text-gray-800 mb-2">BP Generator</h1>
-            <p class="text-gray-500 mb-8">Plataforma de Planos de Negócios UNIARA</p>
+            <p class="text-gray-500 mb-8">UNIARA - Cloud Edition</p>
             
-            <button id="googleBtn" onclick="Google.login()" class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
-                <span>Entrar com Google Institucional</span>
+            <button id="btnLogin" onclick="Google.login()" disabled class="w-full bg-gray-200 text-gray-400 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition cursor-not-allowed">
+                <span>Carregando Google...</span>
             </button>
-            
-            <p id="authMsg" class="mt-4 text-xs text-red-500 font-bold hidden"></p>
+            <p class="text-xs text-gray-400 mt-4">Certifique-se de permitir Pop-ups.</p>
         </div>
     </section>
 
     <section id="screen-dashboard" class="hidden min-h-screen bg-gray-50">
-        <header class="bg-blue-900 text-white p-4 shadow-md">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <h1 class="font-bold text-xl">Meus Projetos</h1>
-                <div class="flex items-center gap-4">
-                    <span id="userNameDisplay" class="text-sm opacity-90">Usuário</span>
-                    <button onclick="Google.logout()" class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded transition">Sair</button>
-                </div>
+        <header class="bg-blue-900 text-white p-4 shadow-md flex justify-between">
+            <h1 class="font-bold text-xl">Meus Projetos</h1>
+            <div class="flex items-center gap-4">
+                <span id="userNameDisplay">...</span>
+                <button onclick="Google.logout()" class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Sair</button>
             </div>
         </header>
-
         <main class="max-w-7xl mx-auto p-6">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">Seus Planos Salvos</h2>
-                <button onclick="App.newPlan()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow transition flex items-center gap-2">
-                    <span>+</span> Novo Plano
-                </button>
+                <h2 class="text-2xl font-bold text-gray-800">Seus Planos</h2>
+                <button onclick="App.newPlan()" class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">+ Novo Plano</button>
             </div>
-
-            <div id="fileList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
+            <div id="fileList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
         </main>
     </section>
 
-    <section id="screen-editor" class="hidden min-h-screen flex flex-col h-screen overflow-hidden">
-        
+    <section id="screen-editor" class="hidden min-h-screen flex flex-col h-screen">
         <header class="bg-white border-b px-6 py-3 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
-                <button onclick="App.showScreen('screen-dashboard')" class="text-gray-400 hover:text-blue-900">
-                    ← Voltar
-                </button>
+                <button onclick="App.showScreen('screen-dashboard')" class="text-gray-400 hover:text-blue-900">← Voltar</button>
                 <div class="h-6 w-px bg-gray-300"></div>
                 <h1 class="font-bold text-lg text-blue-900" id="projectTitleDisplay">Novo Projeto</h1>
             </div>
             <div class="flex gap-2">
-                <span id="saveStatus" class="text-xs text-gray-400 self-center mr-2">Alterações salvas</span>
-                <button onclick="Cloud.saveManual()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm font-bold flex items-center gap-2">
-                    💾 Salvar
-                </button>
-                <button onclick="App.exportPDF()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 text-sm font-bold">
-                    📄 PDF
-                </button>
+                <span id="saveStatus" class="text-xs text-gray-400 self-center mr-2"></span>
+                <button onclick="Cloud.saveManual()" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700">💾 Salvar</button>
+                <button onclick="App.exportPDF()" class="bg-gray-700 text-white px-4 py-2 rounded font-bold hover:bg-gray-800">📄 PDF</button>
             </div>
         </header>
 
         <div class="flex flex-1 overflow-hidden">
             <aside class="w-64 bg-white border-r p-4 overflow-y-auto shrink-0 flex flex-col gap-1">
-                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-2">1. Planejamento</div>
-                <button class="sidebar-btn active" onclick="App.openTab('tab-executivo', this)">1.1 Resumo Executivo</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-mercado', this)">1.2 Análise de Mercado</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-marketing', this)">1.3 Plano de Marketing</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-operacional', this)">1.4 Plano Operacional</button>
-                
-                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6">2. Finanças</div>
-                <button class="sidebar-btn" onclick="App.openTab('tab-financeiro', this)">2.1 Investimentos</button>
-                <button class="sidebar-btn" onclick="App.openTab('tab-dre', this)">2.2 DRE Projetado</button>
+                <button class="sidebar-btn active" onclick="App.openTab('tab-executivo', this)">1. Resumo Executivo</button>
+                <button class="sidebar-btn" onclick="App.openTab('tab-mercado', this)">2. Mercado</button>
+                <button class="sidebar-btn" onclick="App.openTab('tab-marketing', this)">3. Marketing</button>
+                <button class="sidebar-btn" onclick="App.openTab('tab-operacional', this)">4. Operacional</button>
+                <button class="sidebar-btn" onclick="App.openTab('tab-financeiro', this)">5. Financeiro</button>
             </aside>
 
-            <main class="flex-1 overflow-y-auto p-8 bg-gray-50 relative" id="pdfContent">
+            <main class="flex-1 overflow-y-auto p-8 bg-gray-50" id="pdfContent">
                 
                 <div id="tab-executivo" class="tab-content active">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">1.1 Resumo Executivo</h2>
-                    
-                    <div class="guide-box">
-                        <div class="guide-title">💡 Dica UNIARA</div>
-                        <p class="text-sm">Comece definindo a identidade da sua empresa. O que ela faz e para onde ela vai?</p>
-                    </div>
-
-                    <div class="space-y-6 max-w-3xl">
-                        <div>
-                            <label>Nome do Negócio / Projeto</label>
-                            <input type="text" id="campo_nome_empresa" class="input-box text-lg font-bold" placeholder="Digite o nome da empresa...">
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label>CNPJ (Opcional)</label>
-                                <input type="text" id="campo_cnpj" class="input-box">
-                            </div>
-                            <div>
-                                <label>Cidade / Sede</label>
-                                <input type="text" id="campo_cidade" class="input-box">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label>Missão</label>
-                            <p class="text-xs text-gray-500 mb-1">Qual é o propósito fundamental da empresa?</p>
-                            <textarea id="campo_missao" rows="3" class="input-box"></textarea>
-                        </div>
-
-                        <div>
-                            <label>Visão</label>
-                            <p class="text-xs text-gray-500 mb-1">Onde a empresa quer estar em 5 anos?</p>
-                            <textarea id="campo_visao" rows="3" class="input-box"></textarea>
-                        </div>
-
-                        <div>
-                            <label>Valores</label>
-                            <p class="text-xs text-gray-500 mb-1">Princípios que guiam o comportamento da empresa.</p>
-                            <textarea id="campo_valores" rows="3" class="input-box"></textarea>
-                        </div>
+                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Identificação</h2>
+                    <div class="space-y-4 max-w-3xl">
+                        <div><label>Nome da Empresa</label><input type="text" id="campo_nome" class="input-box"></div>
+                        <div><label>Missão</label><textarea id="campo_missao" rows="3" class="input-box"></textarea></div>
+                        <div><label>Visão</label><textarea id="campo_visao" rows="3" class="input-box"></textarea></div>
                     </div>
                 </div>
 
                 <div id="tab-mercado" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">1.2 Análise de Mercado</h2>
-                    
-                    <div class="guide-box">
-                        <div class="guide-title">🎯 Quem compra?</div>
-                        <p class="text-sm">Descreva o perfil do seu cliente ideal e quem são seus concorrentes diretos.</p>
-                    </div>
-
-                    <div class="space-y-6 max-w-3xl">
-                        <div>
-                            <label>Público Alvo (Persona)</label>
-                            <textarea id="campo_publico" rows="4" class="input-box" placeholder="Idade, localização, interesses, renda..."></textarea>
-                        </div>
-
-                        <div>
-                            <label>Análise da Concorrência</label>
-                            <textarea id="campo_concorrentes" rows="4" class="input-box" placeholder="Quem são seus principais concorrentes? Pontos fortes e fracos."></textarea>
-                        </div>
-
-                        <div>
-                            <label>Análise SWOT (Forças, Fraquezas, Oportunidades, Ameaças)</label>
-                            <textarea id="campo_swot" rows="6" class="input-box"></textarea>
-                        </div>
+                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Mercado</h2>
+                    <div class="space-y-4 max-w-3xl">
+                        <div><label>Público Alvo</label><textarea id="campo_publico" rows="4" class="input-box"></textarea></div>
+                        <div><label>Concorrentes</label><textarea id="campo_concorrentes" rows="4" class="input-box"></textarea></div>
                     </div>
                 </div>
 
                 <div id="tab-marketing" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">1.3 Plano de Marketing (4Ps)</h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label>Produto / Serviço</label>
-                            <p class="text-xs text-gray-500">O que você vende?</p>
-                            <textarea id="campo_mkt_produto" rows="4" class="input-box"></textarea>
-                        </div>
-                        <div>
-                            <label>Preço</label>
-                            <p class="text-xs text-gray-500">Estratégia de precificação.</p>
-                            <textarea id="campo_mkt_preco" rows="4" class="input-box"></textarea>
-                        </div>
-                        <div>
-                            <label>Praça (Local)</label>
-                            <p class="text-xs text-gray-500">Onde será vendido? (Loja física, site...)</p>
-                            <textarea id="campo_mkt_praca" rows="4" class="input-box"></textarea>
-                        </div>
-                        <div>
-                            <label>Promoção</label>
-                            <p class="text-xs text-gray-500">Como você vai divulgar?</p>
-                            <textarea id="campo_mkt_promocao" rows="4" class="input-box"></textarea>
-                        </div>
+                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Marketing (4Ps)</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label>Produto</label><textarea id="campo_produto" rows="4" class="input-box"></textarea></div>
+                        <div><label>Preço</label><textarea id="campo_preco" rows="4" class="input-box"></textarea></div>
+                        <div><label>Praça</label><textarea id="campo_praca" rows="4" class="input-box"></textarea></div>
+                        <div><label>Promoção</label><textarea id="campo_promo" rows="4" class="input-box"></textarea></div>
                     </div>
                 </div>
 
                 <div id="tab-operacional" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">1.4 Plano Operacional</h2>
-                    
-                    <div class="space-y-6 max-w-3xl">
-                        <div>
-                            <label>Capacidade Produtiva / Atendimento</label>
-                            <input type="text" id="campo_capacidade" class="input-box" placeholder="Ex: 50 atendimentos por dia / 1000 peças por mês">
-                        </div>
-                        <div>
-                            <label>Processos Chave</label>
-                            <textarea id="campo_processos" rows="4" class="input-box" placeholder="Descreva brevemente como o serviço/produto é feito."></textarea>
-                        </div>
-                        <div>
-                            <label>Equipe Necessária (RH)</label>
-                            <textarea id="campo_equipe" rows="4" class="input-box" placeholder="Quantos funcionários? Quais cargos?"></textarea>
-                        </div>
+                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Operacional</h2>
+                    <div class="space-y-4">
+                        <div><label>Estrutura Física</label><textarea id="campo_estrutura" rows="3" class="input-box"></textarea></div>
+                        <div><label>Equipe</label><textarea id="campo_equipe" rows="3" class="input-box"></textarea></div>
                     </div>
                 </div>
 
                 <div id="tab-financeiro" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">2.1 Investimento Inicial</h2>
-                    
-                    <div class="bg-white p-6 rounded shadow border">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                            <div>
-                                <label>Descrição do Item</label>
-                                <input type="text" placeholder="Ex: Reforma do Local" class="input-box bg-gray-50">
-                            </div>
-                            <div>
-                                <label>Valor Estimado (R$)</label>
-                                <input type="number" placeholder="0,00" class="input-box bg-gray-50">
-                            </div>
+                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">Financeiro</h2>
+                    <div class="space-y-4 max-w-md">
+                        <div><label>Investimento Inicial (R$)</label><input type="number" id="campo_inv_inicial" class="input-box"></div>
+                        <div><label>Faturamento Mensal Previsto (R$)</label><input type="number" id="campo_faturamento" class="input-box"></div>
+                        <div><label>Custos Totais Mensais (R$)</label><input type="number" id="campo_custos" class="input-box"></div>
+                        <div class="p-4 bg-blue-100 rounded">
+                            <label class="font-bold">Lucro Estimado:</label>
+                            <input type="text" id="campo_lucro" class="input-box font-bold" readonly value="R$ 0,00">
                         </div>
-                        <p class="text-xs text-red-500 mt-2">* Para este exemplo, insira o valor total abaixo.</p>
-                    </div>
-
-                    <div class="mt-6 space-y-4 max-w-md">
-                        <div>
-                            <label>Investimento Fixo Total (R$)</label>
-                            <input type="number" id="campo_invest_fixo" class="input-box font-bold text-blue-900">
-                        </div>
-                        <div>
-                            <label>Capital de Giro (R$)</label>
-                            <input type="number" id="campo_capital_giro" class="input-box font-bold text-blue-900">
-                        </div>
-                        <div class="pt-4 border-t">
-                            <label class="text-xl">Total Necessário</label>
-                            <input type="number" id="campo_invest_total" class="input-box bg-blue-100 text-xl font-bold" readonly>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-dre" class="tab-content">
-                    <h2 class="text-2xl font-bold text-blue-900 mb-6 border-b pb-2">2.2 DRE Simplificado</h2>
-                    <p class="mb-4 text-gray-600">Projeção mensal estimada.</p>
-                    
-                    <div class="max-w-md space-y-3">
-                        <div>
-                            <label>Receita Bruta Mensal (R$)</label>
-                            <input type="number" id="campo_dre_receita" class="input-box">
-                        </div>
-                        <div>
-                            <label>Impostos (%)</label>
-                            <input type="number" id="campo_dre_impostos" class="input-box" placeholder="Ex: 6">
-                        </div>
-                        <div>
-                            <label>Custos Variáveis (R$)</label>
-                            <input type="number" id="campo_dre_custos_var" class="input-box">
-                        </div>
-                        <div>
-                            <label>Custos Fixos (Aluguel, Folha...) (R$)</label>
-                            <input type="number" id="campo_dre_custos_fixos" class="input-box">
-                        </div>
-                        <div class="pt-4">
-                            <label class="font-bold text-green-700">Lucro Líquido Estimado</label>
-                            <input type="text" id="campo_dre_lucro" class="input-box bg-green-50 font-bold" readonly value="R$ 0,00">
-                        </div>
-                        <button onclick="App.calcDRE()" class="w-full bg-blue-100 text-blue-800 font-bold py-2 rounded mt-2 hover:bg-blue-200">Calcular Lucro</button>
+                        <button onclick="App.calcLucro()" class="bg-blue-600 text-white w-full py-2 rounded font-bold">Calcular</button>
                     </div>
                 </div>
 
@@ -308,46 +150,91 @@
     </section>
 
     <script>
-        // CONFIGURAÇÕES DO GOOGLE - (Use as suas chaves aqui)
+        // CONFIGURAÇÕES (Use as suas)
         const CONFIG = {
-            clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com', // SUA ID AQUI
-            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo', // SUA API KEY AQUI
+            clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com',
+            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo', // Verifique se essa chave está correta!
             scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
             discovery: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
         };
 
-        // VARIÁVEIS DE ESTADO
-        let tokenClient, gapiInited = false, gsiInited = false;
+        // VARIÁVEIS GLOBAIS
+        let tokenClient;
+        let gapiInited = false;
+        let gsiInited = false;
         let currentFileId = null;
-        let saveTimeout;
 
-        // === 1. GOOGLE AUTH & DRIVE MANAGER ===
-        const Google = {
-            initGapi: async () => {
-                await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
-                gapiInited = true;
-                Google.checkReady();
-            },
-            initGsi: () => {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CONFIG.clientId, scope: CONFIG.scope, callback: ''
+        // === 1. INICIALIZADOR SEGURO (O SEGREDO ESTÁ AQUI) ===
+        function loadGoogleLibraries() {
+            // Loader GAPI
+            const scriptGapi = document.createElement('script');
+            scriptGapi.src = "https://apis.google.com/js/api.js";
+            scriptGapi.onload = () => {
+                gapi.load('client', async () => {
+                    try {
+                        await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
+                        gapiInited = true;
+                        checkAuthReady();
+                    } catch (e) { showError("Erro ao iniciar GAPI (API Key inválida?): " + JSON.stringify(e)); }
                 });
-                gsiInited = true;
-                Google.checkReady();
-            },
-            checkReady: () => {
-                if (gapiInited && gsiInited) {
-                    document.getElementById('loadingOverlay').classList.add('hidden');
-                }
-            },
+            };
+            scriptGapi.onerror = () => showError("Falha ao baixar script GAPI.");
+            document.body.appendChild(scriptGapi);
+
+            // Loader GSI (Identity)
+            const scriptGsi = document.createElement('script');
+            scriptGsi.src = "https://accounts.google.com/gsi/client";
+            scriptGsi.onload = () => {
+                try {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CONFIG.clientId, scope: CONFIG.scope, callback: ''
+                    });
+                    gsiInited = true;
+                    checkAuthReady();
+                } catch (e) { showError("Erro ao iniciar GSI (Client ID inválido?): " + e); }
+            };
+            scriptGsi.onerror = () => showError("Falha ao baixar script GSI.");
+            document.body.appendChild(scriptGsi);
+        }
+
+        function checkAuthReady() {
+            if (gapiInited && gsiInited) {
+                // TUDO PRONTO
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('screen-login').classList.remove('hidden');
+                
+                const btn = document.getElementById('btnLogin');
+                btn.disabled = false;
+                btn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-not-allowed');
+                btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-gray-50', 'border', 'border-gray-300');
+                btn.innerHTML = `<img src="https://www.google.com/favicon.ico" class="w-5 h-5"> <span>Entrar com Google</span>`;
+            } else {
+                document.getElementById('loadingStatus').innerText = `GAPI: ${gapiInited ? 'OK' : '...'} | GSI: ${gsiInited ? 'OK' : '...'}`;
+            }
+        }
+
+        function showError(msg) {
+            const log = document.getElementById('errorLog');
+            log.classList.remove('hidden');
+            log.innerText = msg;
+            document.getElementById('retryBtn').classList.remove('hidden');
+            document.getElementById('spinner').classList.add('hidden');
+            document.getElementById('loadingTitle').innerText = "Erro na Conexão";
+            document.getElementById('loadingTitle').classList.add('text-red-600');
+        }
+
+        // === 2. GOOGLE LOGIC ===
+        const Google = {
             login: () => {
                 tokenClient.callback = async (resp) => {
-                    if (resp.error) return;
-                    App.setLoading(true, "Acessando sua conta...");
-                    await Google.loadUser();
-                    await Cloud.listFiles();
-                    App.showScreen('screen-dashboard');
-                    App.setLoading(false);
+                    if (resp.error) return alert(resp.error);
+                    showLoading(true, "Acessando Drive...");
+                    try {
+                        await Google.loadUser();
+                        await Cloud.listFiles();
+                        App.showScreen('screen-dashboard');
+                    } catch(e) { alert("Erro pós-login: " + e); }
+                    showLoading(false);
                 };
                 tokenClient.requestAccessToken({ prompt: 'consent' });
             },
@@ -361,70 +248,46 @@
             logout: () => {
                 const token = gapi.client.getToken();
                 if (token) google.accounts.oauth2.revoke(token.access_token);
-                window.location.reload();
+                location.reload();
             }
         };
 
-        // === 2. CLOUD MANAGER (SALVAR E ABRIR) ===
+        // === 3. CLOUD LOGIC ===
         const Cloud = {
             listFiles: async () => {
                 const container = document.getElementById('fileList');
-                container.innerHTML = '<div class="col-span-3 text-center text-gray-500">Buscando arquivos...</div>';
-                
+                container.innerHTML = '<p class="col-span-3 text-center">Buscando...</p>';
                 try {
                     const res = await gapi.client.drive.files.list({
-                        pageSize: 20,
-                        fields: "files(id, name, modifiedTime)",
+                        pageSize: 20, fields: "files(id, name, modifiedTime)",
                         q: "name contains 'UNIARA_BP_' and trashed = false"
                     });
-                    
                     container.innerHTML = '';
-                    const files = res.result.files;
-
-                    if (files.length === 0) {
-                        container.innerHTML = '<div class="col-span-3 text-center py-10 text-gray-500 bg-white rounded">Nenhum plano encontrado. Crie um novo!</div>';
+                    if (res.result.files.length === 0) {
+                        container.innerHTML = '<p class="col-span-3 text-center text-gray-400">Nenhum projeto encontrado.</p>';
                         return;
                     }
-
-                    files.forEach(file => {
-                        const cleanName = file.name.replace('UNIARA_BP_', '').replace('.json', '');
-                        const date = new Date(file.modifiedTime).toLocaleDateString('pt-BR');
-                        
-                        const card = document.createElement('div');
-                        card.className = "bg-white p-6 rounded-xl shadow hover:shadow-lg border border-gray-100 cursor-pointer transition flex flex-col justify-between h-40";
-                        card.onclick = () => Cloud.loadFile(file.id);
-                        card.innerHTML = `
-                            <div>
-                                <h3 class="font-bold text-lg text-blue-900 truncate">${cleanName}</h3>
-                                <p class="text-xs text-gray-500 mt-1">Modificado em: ${date}</p>
-                            </div>
-                            <div class="text-right text-sm text-blue-600 font-medium">Abrir Projeto →</div>
-                        `;
-                        container.appendChild(card);
+                    res.result.files.forEach(file => {
+                        const name = file.name.replace('UNIARA_BP_', '').replace('.json', '');
+                        const div = document.createElement('div');
+                        div.className = "bg-white p-6 rounded shadow cursor-pointer hover:border-blue-500 border border-transparent transition";
+                        div.innerHTML = `<h3 class="font-bold text-lg text-blue-900">${name}</h3><p class="text-xs text-gray-500">Abrir Projeto →</p>`;
+                        div.onclick = () => Cloud.loadFile(file.id);
+                        container.appendChild(div);
                     });
-                } catch (e) { console.error(e); container.innerHTML = "Erro ao listar."; }
+                } catch (e) { container.innerHTML = '<p class="text-red-500">Erro ao listar arquivos.</p>'; }
             },
-
             saveManual: async () => {
-                App.setLoading(true, "Salvando...");
-                
-                // 1. COLETAR DADOS (MÁGICA: Pega TUDO que tem ID começando com 'campo_')
+                showLoading(true, "Salvando...");
                 const data = {};
-                document.querySelectorAll('[id^="campo_"]').forEach(el => {
-                    data[el.id] = el.value;
-                });
-
-                // Nome do Arquivo
-                const projName = document.getElementById('campo_nome_empresa').value || 'Sem Nome';
-                const fileName = `UNIARA_BP_${projName}.json`;
-
-                // Metadados
-                const fileContent = JSON.stringify(data);
-                const metadata = { name: fileName, mimeType: 'application/json' };
+                document.querySelectorAll('[id^="campo_"]').forEach(el => data[el.id] = el.value);
                 
+                const projName = document.getElementById('campo_nome').value || 'SemNome';
+                const metadata = { name: `UNIARA_BP_${projName}.json`, mimeType: 'application/json' };
+                const file = new Blob([JSON.stringify(data)], {type: 'application/json'});
                 const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([fileContent], { type: 'application/json' }));
+                form.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+                form.append('file', file);
 
                 const url = currentFileId 
                     ? `https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=multipart`
@@ -437,110 +300,86 @@
                         headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
                         body: form
                     });
-                    const resp = await req.json();
-                    if (!currentFileId) currentFileId = resp.id; // Se for novo, guarda o ID
-                    
-                    document.getElementById('saveStatus').innerText = "Salvo às " + new Date().toLocaleTimeString();
-                    document.getElementById('projectTitleDisplay').innerText = projName;
-                    
-                    if(!currentFileId) await Cloud.listFiles(); // Atualiza lista se for novo
-                    
-                } catch (e) { alert("Erro ao salvar: " + e); }
-                
-                App.setLoading(false);
+                    const json = await req.json();
+                    if(!currentFileId) currentFileId = json.id;
+                    document.getElementById('saveStatus').innerText = "Salvo: " + new Date().toLocaleTimeString();
+                    if(!currentFileId) await Cloud.listFiles();
+                } catch(e) { alert("Erro ao salvar: " + e); }
+                showLoading(false);
             },
-
             loadFile: async (id) => {
-                App.setLoading(true, "Abrindo...");
+                showLoading(true, "Abrindo...");
+                currentFileId = id;
                 try {
-                    currentFileId = id;
                     const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
                     const data = res.result;
-
-                    // PREENCHE OS CAMPOS
-                    Object.keys(data).forEach(key => {
-                        const el = document.getElementById(key);
-                        if (el) el.value = data[key];
+                    Object.keys(data).forEach(k => {
+                        const el = document.getElementById(k);
+                        if(el) el.value = data[k];
                     });
-                    
-                    const name = data['campo_nome_empresa'] || 'Sem Nome';
-                    document.getElementById('projectTitleDisplay').innerText = name;
-                    
+                    document.getElementById('projectTitleDisplay').innerText = data['campo_nome'] || 'Projeto';
                     App.showScreen('screen-editor');
-                    App.calcDRE(); // Recalcula totais
-                    
-                } catch (e) { alert("Erro ao abrir."); }
-                App.setLoading(false);
+                } catch(e) { alert("Erro ao abrir."); }
+                showLoading(false);
             }
         };
 
-        // === 3. APP LOGIC (UI) ===
+        // === 4. APP UI ===
         const App = {
             showScreen: (id) => {
-                document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+                ['screen-login', 'screen-dashboard', 'screen-editor'].forEach(s => document.getElementById(s).classList.add('hidden'));
                 document.getElementById(id).classList.remove('hidden');
-            },
-            setLoading: (show, text) => {
-                const el = document.getElementById('loadingOverlay');
-                if(show) { el.classList.remove('hidden'); document.getElementById('loadingStatus').innerText = text; }
-                else el.classList.add('hidden');
             },
             newPlan: () => {
                 currentFileId = null;
-                document.querySelectorAll('input, textarea').forEach(el => el.value = ''); // Limpa tudo
+                document.querySelectorAll('input, textarea').forEach(el => el.value = '');
                 document.getElementById('projectTitleDisplay').innerText = "Novo Projeto";
                 App.showScreen('screen-editor');
-                App.openTab('tab-executivo', document.querySelector('.sidebar-btn'));
             },
             openTab: (tabId, btn) => {
                 document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
                 document.getElementById(tabId).classList.add('active');
-                
                 document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-                if(btn) btn.classList.add('active');
+                btn.classList.add('active');
             },
-            calcDRE: () => {
-                // Cálculo simples de financeiro
-                const rec = parseFloat(document.getElementById('campo_dre_receita').value) || 0;
-                const imp = parseFloat(document.getElementById('campo_dre_impostos').value) || 0;
-                const varC = parseFloat(document.getElementById('campo_dre_custos_var').value) || 0;
-                const fixC = parseFloat(document.getElementById('campo_dre_custos_fixos').value) || 0;
-
-                const liq = rec - (rec * (imp/100)) - varC - fixC;
-                document.getElementById('campo_dre_lucro').value = liq.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-
-                // Soma investimento
-                const invFixo = parseFloat(document.getElementById('campo_invest_fixo').value) || 0;
-                const capGiro = parseFloat(document.getElementById('campo_capital_giro').value) || 0;
-                document.getElementById('campo_invest_total').value = invFixo + capGiro;
+            calcLucro: () => {
+                const fat = parseFloat(document.getElementById('campo_faturamento').value) || 0;
+                const cust = parseFloat(document.getElementById('campo_custos').value) || 0;
+                const lucro = fat - cust;
+                document.getElementById('campo_lucro').value = lucro.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
             },
             exportPDF: () => {
-                const element = document.getElementById('pdfContent');
-                
-                // Truque: Mostra todas as abas para o PDF imprimir tudo
+                const el = document.getElementById('pdfContent');
                 const tabs = document.querySelectorAll('.tab-content');
                 tabs.forEach(t => t.style.display = 'block');
-
-                const opt = {
-                    margin: 10,
-                    filename: `Plano_${document.getElementById('campo_nome_empresa').value}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    // Volta ao normal
+                html2pdf().from(el).save('PlanoNegocios.pdf').then(() => {
                     tabs.forEach(t => t.style.display = '');
                     document.querySelector('.tab-content.active').style.display = 'block';
                 });
             }
         };
 
-        // Auto-cálculo ao digitar valores
-        document.getElementById('screen-editor').addEventListener('input', (e) => {
-            if(e.target.type === 'number') App.calcDRE();
-        });
+        function showLoading(show, msg) {
+            const el = document.getElementById('loadingOverlay');
+            if(show) {
+                el.classList.remove('hidden');
+                document.getElementById('loadingStatus').innerText = msg;
+                document.getElementById('spinner').classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        // STARTUP
+        window.onload = loadGoogleLibraries;
+
+        // TIMEOUT DE SEGURANÇA (Se travar por 8 segundos, avisa)
+        setTimeout(() => {
+            const overlay = document.getElementById('loadingOverlay');
+            if(!overlay.classList.contains('hidden') && !gapiInited) {
+                showError("Tempo limite excedido. O Google não respondeu. Verifique sua conexão ou se a API Key está correta.");
+            }
+        }, 8000);
 
     </script>
 </body>
