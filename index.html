@@ -4,46 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BP Generator - UNIARA</title>
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <style>
-        /* --- SEU CSS ORIGINAL --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
-        
-        /* Cabeçalho UNIARA */
-        .header { background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%); color: white; padding: 1.5rem; }
-        
-        /* Caixas de Dica */
-        .guide-box { background-color: #e3f2fd; border-left: 4px solid #1976d2; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
-        .guide-box h4 { color: #1976d2; font-weight: 600; margin-bottom: 0.5rem; }
-        
-        /* Botões de Seleção */
-        .option-button { border: 2px solid #ddd; padding: 1rem; margin: 0.5rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; background: white; }
-        .option-button:hover { border-color: #1976d2; background-color: #f5f5f5; }
-        
-        /* Abas de Navegação */
-        .nav-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
-        .nav-tab { padding: 10px 20px; background: #e0e0e0; border-radius: 5px; cursor: pointer; white-space: nowrap; font-weight: bold; color: #555; }
-        .nav-tab.active { background: #1976d2; color: white; }
-        
-        /* Formulários */
-        .form-section { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-section.active { display: block; animation: fadeIn 0.3s; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
 
-        /* Loading Overlay */
-        #loadingOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .hidden { display: none !important; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body>
+<body class="bg-gray-50">
 
     <div id="loadingOverlay">
         <div id="spinner" class="animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent mb-4"></div>
@@ -54,7 +21,7 @@
         </div>
     </div>
 
-    <div class="header shadow-lg">
+    <header class="header shadow-lg">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold">BP Generator</h1>
@@ -63,339 +30,203 @@
             <div id="userDisplay" class="hidden text-right text-sm">
                 <span id="userName" class="font-bold">Usuário</span>
                 <br>
-                <button onclick="Google.logout()" class="text-red-200 hover:text-white underline text-xs">Sair</button>
+                <button onclick="App.logout()" class="text-red-200 hover:text-white underline text-xs">Sair</button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div id="loginScreen" class="hidden min-h-[70vh] flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center border-t-4 border-blue-900">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Acesso ao Sistema</h2>
-            
-            <div class="guide-box text-left">
-                <h4>🔐 Login Institucional</h4>
-                <p class="text-sm text-gray-600">Para salvar seus projetos com segurança no Google Drive, faça o login abaixo.</p>
-            </div>
+    <main class="container mx-auto">
+        <!-- Login Screen -->
+        <section id="loginScreen" class="hidden min-h-[70vh] flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center border-t-4 border-blue-900">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Acesso ao Sistema</h2>
 
-            <button id="googleBtn" onclick="Google.login()" class="w-full bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-700 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition shadow-sm mt-4">
-                <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
-                <span>Entrar com Google</span>
-            </button>
-            <p class="text-xs text-gray-400 mt-4">Certifique-se que pop-ups estão permitidos.</p>
-        </div>
-    </div>
+                <div class="guide-box text-left">
+                    <h4>🔐 Login Institucional</h4>
+                    <p class="text-sm text-gray-600">Para salvar seus projetos com segurança no Google Drive, faça o login abaixo.</p>
+                </div>
 
-    <div id="dashboardScreen" class="hidden max-w-7xl mx-auto p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-700">Meus Planos</h2>
-            <button onclick="App.newPlan()" class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 font-bold transition">+ Criar Novo Projeto</button>
-        </div>
-        
-        <div id="fileList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            </div>
-    </div>
-
-    <div id="purposeScreen" class="hidden max-w-4xl mx-auto p-6 mt-10">
-        <h2 class="text-2xl font-bold text-center mb-8 text-gray-700">Qual o objetivo do seu plano?</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="option-button" onclick="App.goToEditor('academico')">
-                <h3 class="font-bold text-lg mb-2 text-blue-900">📚 Trabalho Acadêmico</h3>
-                <p class="text-gray-600">Estrutura focada em TCC e projetos disciplinares da Uniara.</p>
-            </div>
-            <div class="option-button" onclick="App.goToEditor('negocio')">
-                <h3 class="font-bold text-lg mb-2 text-blue-900">🚀 Novo Negócio</h3>
-                <p class="text-gray-600">Estrutura completa para abertura de empresas reais.</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="editorScreen" class="hidden max-w-7xl mx-auto p-6">
-        
-        <div class="flex justify-between items-center mb-6 bg-white p-4 rounded shadow-sm sticky top-0 z-10">
-            <div class="flex items-center gap-3">
-                <button onclick="App.showScreen('dashboardScreen')" class="text-gray-400 hover:text-blue-900 font-bold">← Voltar</button>
-                <div class="h-6 w-px bg-gray-300"></div>
-                <h2 class="font-bold text-xl text-blue-900" id="projectTitle">Novo Plano</h2>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="Cloud.saveManual()" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700 shadow flex items-center gap-2">
-                    💾 Salvar
+                <button id="googleBtn" onclick="App.login()" class="w-full bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-700 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 transition shadow-sm mt-4">
+                    <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                    <span>Entrar com Google</span>
                 </button>
-                <button onclick="App.exportPDF()" class="bg-gray-700 text-white px-6 py-2 rounded font-bold hover:bg-gray-800 shadow">
-                    📄 PDF
-                </button>
+                <p class="text-xs text-gray-400 mt-4">Certifique-se que pop-ups estão permitidos.</p>
             </div>
-        </div>
+        </section>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="App.openTab('identificacao', this)">1. Identificação</button>
-            <button class="nav-tab" onclick="App.openTab('mercado', this)">2. Mercado</button>
-            <button class="nav-tab" onclick="App.openTab('marketing', this)">3. Marketing</button>
-            <button class="nav-tab" onclick="App.openTab('operacional', this)">4. Operacional</button>
-            <button class="nav-tab" onclick="App.openTab('financeiro', this)">5. Financeiro</button>
-        </div>
-
-        <div id="content-area">
-            <div id="tab-identificacao" class="form-section active">
-                <div class="guide-box">
-                    <h4>🆔 Dados do Empreendimento</h4>
-                    <p>Defina a identidade da empresa.</p>
+        <!-- Dashboard Screen -->
+        <section id="dashboardScreen" class="hidden max-w-7xl mx-auto p-6">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-700">Meus Planos</h2>
+                    <p class="text-gray-500 text-sm">Gerencie seus projetos salvos no Google Drive</p>
                 </div>
-                <div class="form-group"><label>Nome do Projeto / Empresa</label><input type="text" id="campo_nome" class="form-control" placeholder="Nome..."></div>
-                <div class="form-group"><label>Missão</label><textarea id="campo_missao" rows="3" class="form-control"></textarea></div>
-                <div class="form-group"><label>Visão</label><textarea id="campo_visao" rows="3" class="form-control"></textarea></div>
+                <button onclick="App.newPlan()" class="btn btn-primary">+ Criar Novo Projeto</button>
             </div>
 
-            <div id="tab-mercado" class="form-section">
-                <div class="guide-box">
-                    <h4>🎯 Análise de Mercado</h4>
-                    <p>Conheça seu cliente e concorrentes.</p>
-                </div>
-                <div class="form-group"><label>Público Alvo</label><textarea id="campo_publico" rows="4" class="form-control"></textarea></div>
-                <div class="form-group"><label>Concorrentes</label><textarea id="campo_concorrentes" rows="4" class="form-control"></textarea></div>
+            <div id="fileList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Files will be rendered here -->
             </div>
+        </section>
 
-            <div id="tab-marketing" class="form-section">
-                <div class="guide-box">
-                    <h4>📢 Plano de Marketing (4Ps)</h4>
-                    <p>Como você vai vender?</p>
+        <!-- Purpose Selection Screen -->
+        <section id="purposeScreen" class="hidden max-w-4xl mx-auto p-6 mt-10">
+            <h2 class="text-2xl font-bold text-center mb-8 text-gray-700">Qual o objetivo do seu plano?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="option-button group p-8" onclick="App.goToEditor('academico')">
+                    <div class="text-4xl mb-4">📚</div>
+                    <h3 class="font-bold text-xl mb-2 text-blue-900">Trabalho Acadêmico</h3>
+                    <p class="text-gray-600">Estrutura focada em TCC e projetos disciplinares da Uniara.</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group"><label>Produto</label><textarea id="campo_produto" rows="3" class="form-control"></textarea></div>
-                    <div class="form-group"><label>Preço</label><textarea id="campo_preco" rows="3" class="form-control"></textarea></div>
-                    <div class="form-group"><label>Praça (Local)</label><textarea id="campo_praca" rows="3" class="form-control"></textarea></div>
-                    <div class="form-group"><label>Promoção</label><textarea id="campo_promocao" rows="3" class="form-control"></textarea></div>
-                </div>
-            </div>
-
-            <div id="tab-operacional" class="form-section">
-                <div class="guide-box">
-                    <h4>⚙️ Plano Operacional</h4>
-                    <p>Estrutura e Equipe.</p>
-                </div>
-                <div class="form-group"><label>Estrutura Física</label><textarea id="campo_estrutura" rows="3" class="form-control"></textarea></div>
-                <div class="form-group"><label>Equipe Necessária</label><textarea id="campo_equipe" rows="3" class="form-control"></textarea></div>
-            </div>
-
-            <div id="tab-financeiro" class="form-section">
-                <div class="guide-box">
-                    <h4>💰 Viabilidade Financeira</h4>
-                    <p>Estimativas simples.</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group"><label>Investimento Inicial (R$)</label><input type="number" id="campo_investimento" class="form-control"></div>
-                    <div class="form-group"><label>Faturamento Mensal (R$)</label><input type="number" id="campo_faturamento" class="form-control"></div>
-                </div>
-                <div class="form-group"><label>Custos Fixos Totais (R$)</label><input type="number" id="campo_custos" class="form-control"></div>
-                
-                <div class="p-6 bg-white border-2 border-blue-100 rounded text-center shadow-sm mt-4">
-                    <p class="text-sm text-gray-500 uppercase font-bold">Lucro Estimado</p>
-                    <input type="text" id="campo_lucro" readonly class="text-3xl font-bold text-blue-800 text-center w-full border-none bg-transparent" value="R$ 0,00">
+                <div class="option-button group p-8" onclick="App.goToEditor('negocio')">
+                    <div class="text-4xl mb-4">🚀</div>
+                    <h3 class="font-bold text-xl mb-2 text-blue-900">Novo Negócio</h3>
+                    <p class="text-gray-600">Estrutura completa para abertura de empresas reais.</p>
                 </div>
             </div>
-        </div>
-    </div>
+            <div class="text-center mt-8">
+                <button onclick="UI.showScreen('dashboardScreen')" class="text-gray-500 hover:text-gray-700 underline">Voltar para o Dashboard</button>
+            </div>
+        </section>
 
-    <script>
-        // CONFIGURAÇÕES
-        const CONFIG = {
-            clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com',
-            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo',
-            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
-            discovery: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
-        };
+        <!-- Editor Screen -->
+        <section id="editorScreen" class="hidden max-w-7xl mx-auto p-6">
+            <div class="flex flex-wrap justify-between items-center mb-6 bg-white p-4 rounded shadow-sm sticky top-0 z-10 gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="UI.showScreen('dashboardScreen')" class="text-gray-400 hover:text-blue-900 font-bold transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
+                    <div class="h-6 w-px bg-gray-300"></div>
+                    <h2 class="font-bold text-xl text-blue-900" id="projectTitle">Novo Plano</h2>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="App.saveProject()" class="btn btn-success flex items-center gap-2">
+                        <span>💾 Salvar</span>
+                    </button>
+                    <button onclick="App.exportPDF()" class="btn btn-secondary flex items-center gap-2">
+                        <span>📄 PDF</span>
+                    </button>
+                </div>
+            </div>
 
-        let tokenClient, gapiInited = false, gsiInited = false, currentFileId = null;
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="UI.openTab('identificacao', this)">1. Identificação</button>
+                <button class="nav-tab" onclick="UI.openTab('mercado', this)">2. Mercado</button>
+                <button class="nav-tab" onclick="UI.openTab('marketing', this)">3. Marketing</button>
+                <button class="nav-tab" onclick="UI.openTab('operacional', this)">4. Operacional</button>
+                <button class="nav-tab" onclick="UI.openTab('financeiro', this)">5. Financeiro</button>
+            </div>
 
-        // === 1. INICIALIZAÇÃO SEGURA (CORREÇÃO DO LOOP INFINITO) ===
-        function initSystem() {
-            const scriptGapi = document.createElement('script');
-            scriptGapi.src = "https://apis.google.com/js/api.js";
-            scriptGapi.onload = () => {
-                gapi.load('client', async () => {
-                    await gapi.client.init({ apiKey: CONFIG.apiKey, discoveryDocs: CONFIG.discovery });
-                    gapiInited = true; checkReady();
-                });
-            };
-            document.body.appendChild(scriptGapi);
+            <div id="content-area">
+                <div id="tab-identificacao" class="form-section active">
+                    <div class="guide-box">
+                        <h4>🆔 Dados do Empreendimento</h4>
+                        <p>Defina a identidade da empresa.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_nome">Nome do Projeto / Empresa</label>
+                        <input type="text" id="campo_nome" class="form-control" placeholder="Digite o nome do seu projeto...">
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_missao">Missão</label>
+                        <textarea id="campo_missao" rows="3" class="form-control" placeholder="Qual o propósito da empresa?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_visao">Visão</label>
+                        <textarea id="campo_visao" rows="3" class="form-control" placeholder="Onde a empresa quer chegar?"></textarea>
+                    </div>
+                </div>
 
-            const scriptGsi = document.createElement('script');
-            scriptGsi.src = "https://accounts.google.com/gsi/client";
-            scriptGsi.onload = () => {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CONFIG.clientId, scope: CONFIG.scope, callback: ''
-                });
-                gsiInited = true; checkReady();
-            };
-            document.body.appendChild(scriptGsi);
-        }
+                <div id="tab-mercado" class="form-section">
+                    <div class="guide-box">
+                        <h4>🎯 Análise de Mercado</h4>
+                        <p>Conheça seu cliente e concorrentes.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_publico">Público Alvo</label>
+                        <textarea id="campo_publico" rows="4" class="form-control" placeholder="Quem são seus clientes?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_concorrentes">Concorrentes</label>
+                        <textarea id="campo_concorrentes" rows="4" class="form-control" placeholder="Quem são seus principais concorrentes?"></textarea>
+                    </div>
+                </div>
 
-        function checkReady() {
-            if (gapiInited && gsiInited) {
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                document.getElementById('loginScreen').classList.remove('hidden');
-            }
-        }
+                <div id="tab-marketing" class="form-section">
+                    <div class="guide-box">
+                        <h4>📢 Plano de Marketing (4Ps)</h4>
+                        <p>Como você vai vender?</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="campo_produto">Produto</label>
+                            <textarea id="campo_produto" rows="3" class="form-control" placeholder="O que você vende?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="campo_preco">Preço</label>
+                            <textarea id="campo_preco" rows="3" class="form-control" placeholder="Quanto vai custar?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="campo_praca">Praça (Local)</label>
+                            <textarea id="campo_praca" rows="3" class="form-control" placeholder="Onde os clientes te encontram?"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="campo_promocao">Promoção</label>
+                            <textarea id="campo_promocao" rows="3" class="form-control" placeholder="Como você vai divulgar?"></textarea>
+                        </div>
+                    </div>
+                </div>
 
-        // Timeout de segurança (Se travar, mostra botão)
-        setTimeout(() => {
-            if(!document.getElementById('loadingOverlay').classList.contains('hidden')) {
-                document.getElementById('spinner').classList.add('hidden');
-                document.getElementById('loadingActions').classList.remove('hidden');
-            }
-        }, 5000);
+                <div id="tab-operacional" class="form-section">
+                    <div class="guide-box">
+                        <h4>⚙️ Plano Operacional</h4>
+                        <p>Estrutura e Equipe.</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_estrutura">Estrutura Física</label>
+                        <textarea id="campo_estrutura" rows="3" class="form-control" placeholder="Espaço físico, equipamentos..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_equipe">Equipe Necessária</label>
+                        <textarea id="campo_equipe" rows="3" class="form-control" placeholder="Quem vai trabalhar com você?"></textarea>
+                    </div>
+                </div>
 
-        // === 2. GOOGLE AUTH & DRIVE ===
-        const Google = {
-            login: () => {
-                tokenClient.callback = async (resp) => {
-                    if (resp.error) return alert("Erro no Login: " + resp.error);
-                    App.setLoading(true, "Acessando Drive...");
-                    try {
-                        await Google.getUser();
-                        await Cloud.listFiles();
-                        App.showScreen('dashboardScreen');
-                    } catch(e) { console.error(e); }
-                    App.setLoading(false);
-                };
-                tokenClient.requestAccessToken({ prompt: 'consent' });
-            },
-            getUser: async () => {
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
-                });
-                const user = await res.json();
-                document.getElementById('userDisplay').classList.remove('hidden');
-                document.getElementById('userName').innerText = user.given_name;
-            },
-            logout: () => {
-                const token = gapi.client.getToken();
-                if (token) google.accounts.oauth2.revoke(token.access_token);
-                location.reload();
-            }
-        };
+                <div id="tab-financeiro" class="form-section">
+                    <div class="guide-box">
+                        <h4>💰 Viabilidade Financeira</h4>
+                        <p>Estimativas simples.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label for="campo_investimento">Investimento Inicial (R$)</label>
+                            <input type="number" id="campo_investimento" class="form-control" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="campo_faturamento">Faturamento Mensal (R$)</label>
+                            <input type="number" id="campo_faturamento" class="form-control" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="campo_custos">Custos Fixos Totais (R$)</label>
+                        <input type="number" id="campo_custos" class="form-control" placeholder="0.00">
+                    </div>
 
-        const Cloud = {
-            listFiles: async () => {
-                const list = document.getElementById('fileList');
-                list.innerHTML = '<p class="text-gray-500">Buscando...</p>';
-                try {
-                    const res = await gapi.client.drive.files.list({
-                        pageSize: 20, fields: "files(id, name)",
-                        q: "name contains 'UNIARA_BP_' and trashed = false"
-                    });
-                    list.innerHTML = '';
-                    if (res.result.files.length === 0) {
-                        list.innerHTML = '<div class="col-span-3 text-center p-8 bg-white text-gray-400">Nenhum projeto encontrado.</div>';
-                        return;
-                    }
-                    res.result.files.forEach(f => {
-                        const name = f.name.replace('UNIARA_BP_', '').replace('.json', '');
-                        const div = document.createElement('div');
-                        div.className = "bg-white p-6 rounded shadow cursor-pointer border-l-4 border-blue-500 hover:shadow-lg transition";
-                        div.innerHTML = `<h3 class="font-bold text-gray-800">${name}</h3><p class="text-xs text-blue-600 mt-2">Clique para abrir</p>`;
-                        div.onclick = () => Cloud.loadFile(f.id);
-                        list.appendChild(div);
-                    });
-                } catch(e) { list.innerHTML = 'Erro ao listar.'; }
-            },
-            saveManual: async () => {
-                App.setLoading(true, "Salvando...");
-                const data = {};
-                document.querySelectorAll('[id^="campo_"]').forEach(el => data[el.id] = el.value);
-                const name = document.getElementById('campo_nome').value || 'Sem Nome';
-                const fileMetadata = { name: `UNIARA_BP_${name}.json`, mimeType: 'application/json' };
-                const fileContent = JSON.stringify(data);
-                
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(fileMetadata)], { type: 'application/json' }));
-                form.append('file', new Blob([fileContent], { type: 'application/json' }));
+                    <div class="p-8 bg-blue-50 border-2 border-blue-100 rounded-xl text-center shadow-inner mt-6">
+                        <p class="text-xs text-blue-400 uppercase font-bold tracking-wider mb-2">Lucro Mensal Estimado</p>
+                        <input type="text" id="campo_lucro" readonly class="text-4xl font-black text-blue-900 text-center w-full border-none bg-transparent focus:ring-0" value="R$ 0,00">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-                const url = currentFileId 
-                    ? `https://www.googleapis.com/upload/drive/v3/files/${currentFileId}?uploadType=multipart` 
-                    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-                const method = currentFileId ? 'PATCH' : 'POST';
-
-                try {
-                    const req = await fetch(url, {
-                        method: method,
-                        headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
-                        body: form
-                    });
-                    const json = await req.json();
-                    if(!currentFileId) currentFileId = json.id;
-                    alert("✅ Projeto salvo com sucesso!");
-                    if(!currentFileId) await Cloud.listFiles();
-                } catch(e) { alert("Erro ao salvar."); }
-                App.setLoading(false);
-            },
-            loadFile: async (id) => {
-                App.setLoading(true, "Abrindo...");
-                currentFileId = id;
-                try {
-                    const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
-                    const data = res.result;
-                    Object.keys(data).forEach(k => {
-                        const el = document.getElementById(k);
-                        if(el) el.value = data[k];
-                    });
-                    document.getElementById('projectTitle').innerText = data['campo_nome'] || 'Projeto Carregado';
-                    App.showScreen('editorScreen');
-                    App.calcLucro();
-                } catch(e) { alert("Erro ao abrir."); }
-                App.setLoading(false);
-            }
-        };
-
-        // === 3. LÓGICA DO APP (UI) ===
-        const App = {
-            setLoading: (show, msg) => {
-                const el = document.getElementById('loadingOverlay');
-                if(show) { el.classList.remove('hidden'); document.getElementById('loadingText').innerText = msg; } 
-                else el.classList.add('hidden');
-            },
-            showScreen: (id) => {
-                ['loginScreen', 'dashboardScreen', 'purposeScreen', 'editorScreen'].forEach(s => document.getElementById(s).classList.add('hidden'));
-                document.getElementById(id).classList.remove('hidden');
-            },
-            newPlan: () => {
-                currentFileId = null;
-                document.querySelectorAll('input, textarea').forEach(el => el.value = '');
-                document.getElementById('projectTitle').innerText = "Novo Projeto";
-                App.showScreen('purposeScreen');
-            },
-            goToEditor: (type) => {
-                App.showScreen('editorScreen');
-                App.openTab('identificacao', document.querySelector('.nav-tab'));
-            },
-            openTab: (tabId, btn) => {
-                document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-                document.getElementById('tab-' + tabId).classList.add('active');
-                document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-                if(btn) btn.classList.add('active');
-            },
-            calcLucro: () => {
-                const fat = parseFloat(document.getElementById('campo_faturamento').value) || 0;
-                const cust = parseFloat(document.getElementById('campo_custos').value) || 0;
-                const luc = fat - cust;
-                document.getElementById('campo_lucro').value = luc.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-            },
-            exportPDF: () => {
-                const el = document.getElementById('content-area');
-                document.querySelectorAll('.form-section').forEach(s => s.style.display = 'block');
-                html2pdf().from(el).save('Plano_UNIARA.pdf').then(() => {
-                    document.querySelectorAll('.form-section').forEach(s => s.style.display = '');
-                    document.querySelector('.form-section.active').style.display = 'block';
-                });
-            }
-        };
-
-        // Auto-cálculo
-        document.getElementById('tab-financeiro').addEventListener('input', App.calcLucro);
-
-        // INICIAR TUDO
-        window.onload = initSystem;
-
-    </script>
+    <!-- Scripts -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/google-drive.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 </html>
