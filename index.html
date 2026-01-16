@@ -5,10 +5,182 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BP Generator - UNIARA</title>
 
+    <!-- Frameworks (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        /* --- ESTILOS GERAIS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; }
+
+        /* Cabeçalho UNIARA */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5aa0 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Caixas de Dica */
+        .guide-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+        .guide-box h4 {
+            color: #1e40af;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Botões de Seleção */
+        .option-button {
+            border: 2px solid #e2e8f0;
+            padding: 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            text-align: left;
+        }
+        .option-button:hover {
+            border-color: #2563eb;
+            background-color: #f1f5f9;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Abas de Navegação */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            background: #f1f5f9;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
+            color: #64748b;
+            border: 1px solid transparent;
+            border-bottom: none;
+            transition: all 0.2s;
+        }
+        .nav-tab:hover { background: #e2e8f0; color: #1e293b; }
+        .nav-tab.active {
+            background: white;
+            color: #2563eb;
+            border-color: #e2e8f0;
+            border-bottom: 2px solid white;
+            margin-bottom: -2px;
+            z-index: 1;
+        }
+
+        /* Formulários */
+        .form-section {
+            display: none;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            transition: all 0.2s;
+            font-size: 1rem;
+            color: #1e293b;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Botões Customizados */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+        }
+        .btn-success {
+            background-color: #059669;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
+        }
+        .btn-success:hover { background-color: #047857; }
+        .btn-secondary { background-color: #4b5563; color: white; }
+        .btn-secondary:hover { background-color: #374151; }
+        .btn-danger { background-color: #dc2626; color: white; }
+        .btn-danger:hover { background-color: #b91c1c; }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
 <body class="bg-gray-50">
 
@@ -16,8 +188,8 @@
         <div id="spinner" class="animate-spin rounded-full h-12 w-12 border-4 border-blue-900 border-t-transparent mb-4"></div>
         <h2 id="loadingText" class="text-xl font-bold text-blue-900">Iniciando Sistema...</h2>
         <div id="loadingActions" class="hidden mt-4 text-center">
-            <p class="text-red-500 mb-2">O Google está demorando para responder.</p>
-            <button onclick="window.location.reload()" class="bg-blue-600 text-white px-4 py-2 rounded">Recarregar Página</button>
+            <p class="text-red-500 mb-2">Erro ao carregar recursos externos.</p>
+            <button onclick="window.location.reload()" class="bg-blue-600 text-white px-4 py-2 rounded">Tentar Novamente</button>
         </div>
     </div>
 
@@ -223,10 +395,321 @@
         </section>
     </main>
 
-    <!-- Scripts -->
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/google-drive.js"></script>
-    <script src="assets/js/ui.js"></script>
-    <script src="assets/js/app.js"></script>
+    <script>
+        // CONFIGURAÇÕES
+        const CONFIG = {
+            clientId: '73623365605-79fuc56g2i857jqhhs0cluv5le75qrte.apps.googleusercontent.com',
+            apiKey: 'AIzaSyAF7fB1NJZwUlpLGoSC50rsmLPgX_o3DPo',
+            scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile',
+            discovery: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
+        };
+
+        // --- GOOGLE API MODULE ---
+        const GoogleAPI = {
+            tokenClient: null,
+            gapiInited: false,
+            gsiInited: false,
+
+            init(callback) {
+                console.log("GoogleAPI: Iniciando carregamento de scripts...");
+
+                // Carregamento de Scripts
+                this.loadScript("https://apis.google.com/js/api.js", () => {
+                    console.log("GoogleAPI: gapi carregado.");
+                    if (typeof gapi !== 'undefined') {
+                        gapi.load('client', () => {
+                            gapi.client.init({
+                                apiKey: CONFIG.apiKey,
+                                discoveryDocs: CONFIG.discovery
+                            }).then(() => {
+                                console.log("GoogleAPI: gapi ready.");
+                                GoogleAPI.gapiInited = true;
+                                GoogleAPI.checkReady(callback);
+                            }).catch(e => {
+                                console.error("GAPI Init Error", e);
+                                GoogleAPI.gapiInited = true;
+                                GoogleAPI.checkReady(callback);
+                            });
+                        });
+                    }
+                }, () => {
+                    GoogleAPI.gapiInited = true;
+                    GoogleAPI.checkReady(callback);
+                });
+
+                this.loadScript("https://accounts.google.com/gsi/client", () => {
+                    console.log("GoogleAPI: gsi carregado.");
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        try {
+                            GoogleAPI.tokenClient = google.accounts.oauth2.initTokenClient({
+                                client_id: CONFIG.clientId,
+                                scope: CONFIG.scope,
+                                callback: ''
+                            });
+                            console.log("GoogleAPI: gsi ready.");
+                            GoogleAPI.gsiInited = true;
+                            GoogleAPI.checkReady(callback);
+                        } catch (e) {
+                            GoogleAPI.gsiInited = true;
+                            GoogleAPI.checkReady(callback);
+                        }
+                    }
+                }, () => {
+                    GoogleAPI.gsiInited = true;
+                    GoogleAPI.checkReady(callback);
+                });
+            },
+
+            loadScript(src, onload, onerror) {
+                const s = document.createElement('script');
+                s.src = src; s.async = true; s.defer = true;
+                s.onload = onload; s.onerror = onerror;
+                document.head.appendChild(s);
+            },
+
+            checkReady(callback) {
+                if (GoogleAPI.gapiInited && GoogleAPI.gsiInited) {
+                    if (callback) callback();
+                }
+            },
+
+            login(callback) {
+                if (!this.tokenClient) return alert("Erro de conexão com Google.");
+                this.tokenClient.callback = (resp) => {
+                    if (resp.error) return UI.showToast("Erro no Login", "error");
+                    callback(resp);
+                };
+                this.tokenClient.requestAccessToken({ prompt: 'consent' });
+            },
+
+            async getUserInfo() {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` }
+                });
+                return await res.json();
+            },
+
+            logout() {
+                const t = gapi.client.getToken();
+                if (t) google.accounts.oauth2.revoke(t.access_token);
+                location.reload();
+            },
+
+            async listFiles() {
+                const res = await gapi.client.drive.files.list({
+                    pageSize: 50, fields: "files(id, name, createdTime, modifiedTime)",
+                    q: "name contains 'UNIARA_BP_' and trashed = false", orderBy: "modifiedTime desc"
+                });
+                return res.result.files;
+            },
+
+            async saveFile(name, data, fileId = null) {
+                const meta = { name: `UNIARA_BP_${name}.json`, mimeType: 'application/json' };
+                const body = JSON.stringify(data);
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+                form.append('file', new Blob([body], { type: 'application/json' }));
+                const url = fileId ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+                const res = await fetch(url, {
+                    method: fileId ? 'PATCH' : 'POST',
+                    headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
+                    body: form
+                });
+                return await res.json();
+            },
+
+            async getFile(id) {
+                const res = await gapi.client.drive.files.get({ fileId: id, alt: 'media' });
+                return res.result;
+            },
+
+            async deleteFile(id) {
+                return await gapi.client.drive.files.delete({ fileId: id });
+            }
+        };
+
+        // --- UI MODULE ---
+        const UI = {
+            setLoading(show, msg = "Carregando...") {
+                const el = document.getElementById('loadingOverlay');
+                if (show) { el.classList.remove('hidden'); document.getElementById('loadingText').innerText = msg; }
+                else el.classList.add('hidden');
+            },
+
+            showScreen(id) {
+                ['loginScreen', 'dashboardScreen', 'purposeScreen', 'editorScreen'].forEach(s => {
+                    const el = document.getElementById(s);
+                    if (el) el.classList.add('hidden');
+                });
+                const screen = document.getElementById(id);
+                if (screen) screen.classList.remove('hidden');
+            },
+
+            renderFileList(files, onSelect, onDelete) {
+                const list = document.getElementById('fileList');
+                list.innerHTML = '';
+                if (!files || files.length === 0) {
+                    list.innerHTML = '<div class="col-span-full text-center p-12 bg-white rounded-lg border-2 border-dashed border-gray-200 text-gray-400">Nenhum projeto encontrado.</div>';
+                    return;
+                }
+                files.forEach(f => {
+                    const name = f.name.replace('UNIARA_BP_', '').replace('.json', '');
+                    const div = document.createElement('div');
+                    div.className = "bg-white p-6 rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col justify-between group relative cursor-pointer";
+                    div.innerHTML = `<div><h3 class="font-bold text-gray-800 text-lg mb-1">${name}</h3><p class="text-xs text-gray-400">Modificado: ${new Date(f.modifiedTime).toLocaleDateString()}</p></div>
+                        <div class="mt-4 flex justify-between items-center"><button class="text-blue-600 font-semibold text-sm hover:underline">Abrir</button>
+                        <button class="delete-btn opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition">Excluir</button></div>`;
+                    div.querySelector('.delete-btn').onclick = (e) => { e.stopPropagation(); if (confirm(`Excluir "${name}"?`)) onDelete(f.id); };
+                    div.onclick = () => onSelect(f.id);
+                    list.appendChild(div);
+                });
+            },
+
+            updateUserDisplay(user) {
+                const display = document.getElementById('userDisplay');
+                const name = document.getElementById('userName');
+                if (display) display.classList.remove('hidden');
+                if (name) name.innerText = user.given_name;
+            },
+
+            openTab(tabId, btn) {
+                document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+                const tab = document.getElementById('tab-' + tabId);
+                if (tab) tab.classList.add('active');
+                document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+                if (btn) btn.classList.add('active');
+            },
+
+            setProjectTitle(title) { document.getElementById('projectTitle').innerText = title || 'Novo Plano'; },
+            fillFormData(data) { Object.keys(data).forEach(k => { const el = document.getElementById(k); if (el) el.value = data[k]; }); },
+            getFormData() { const data = {}; document.querySelectorAll('[id^="campo_"]').forEach(el => data[el.id] = el.value); return data; },
+            clearForm() { document.querySelectorAll('input, textarea').forEach(el => el.value = ''); },
+
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white font-bold transition-all transform translate-y-20 z-[10000] ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+                toast.innerText = message; document.body.appendChild(toast);
+                setTimeout(() => toast.classList.remove('translate-y-20'), 10);
+                setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 500); }, 3000);
+            }
+        };
+
+        // --- APP MODULE ---
+        const App = {
+            currentFileId: null,
+            init() {
+                console.log("App Init");
+                UI.setLoading(true, "Iniciando...");
+                const safetyTimeout = setTimeout(() => {
+                    if (!document.getElementById('loadingOverlay').classList.contains('hidden')) {
+                        document.getElementById('spinner').classList.add('hidden');
+                        document.getElementById('loadingActions').classList.remove('hidden');
+                    }
+                }, 10000);
+
+                GoogleAPI.init(() => {
+                    console.log("Google APIs initialized");
+                    clearTimeout(safetyTimeout);
+                    UI.setLoading(false);
+                    UI.showScreen('loginScreen');
+                });
+                const tabFin = document.getElementById('tab-financeiro');
+                if (tabFin) tabFin.addEventListener('input', () => this.calcLucro());
+            },
+
+            async login() {
+                GoogleAPI.login(async (resp) => {
+                    UI.setLoading(true, "Acessando Google Drive...");
+                    try {
+                        const user = await GoogleAPI.getUserInfo();
+                        UI.updateUserDisplay(user);
+                        await this.refreshDashboard();
+                        UI.showScreen('dashboardScreen');
+                        UI.showToast(`Bem-vindo, ${user.given_name}!`);
+                    } catch (e) { UI.showToast("Erro ao carregar dados.", "error"); }
+                    UI.setLoading(false);
+                });
+            },
+
+            logout() { GoogleAPI.logout(); },
+            async refreshDashboard() {
+                try { const files = await GoogleAPI.listFiles(); UI.renderFileList(files, (id) => this.loadFile(id), (id) => this.deleteFile(id)); }
+                catch (e) { console.error(e); }
+            },
+            newPlan() { this.currentFileId = null; UI.clearForm(); UI.setProjectTitle("Novo Projeto"); UI.showScreen('purposeScreen'); },
+            goToEditor(type) { UI.showScreen('editorScreen'); UI.openTab('identificacao', document.querySelector('.nav-tab')); this.applyTemplate(type); },
+
+            applyTemplate(type) {
+                const gI = document.querySelector('#tab-identificacao .guide-box p');
+                const gM = document.querySelector('#tab-mercado .guide-box p');
+                if (type === 'academico') { if (gI) gI.innerText = "Foco em fundamentação teórica."; if (gM) gM.innerText = "Análise teórica do nicho."; }
+                else { if (gI) gI.innerText = "Foco em viabilidade prática."; if (gM) gM.innerText = "Análise direta de mercado."; }
+            },
+
+            async saveProject() {
+                const data = UI.getFormData(); const name = data['campo_nome'] || 'Sem Nome';
+                UI.setLoading(true, "Salvando...");
+                try {
+                    const res = await GoogleAPI.saveFile(name, data, this.currentFileId);
+                    if (!this.currentFileId) this.currentFileId = res.id;
+                    UI.setProjectTitle(name); UI.showToast("✅ Projeto salvo!");
+                } catch (e) { UI.showToast("Erro ao salvar.", "error"); }
+                UI.setLoading(false);
+            },
+
+            async loadFile(id) {
+                UI.setLoading(true, "Abrindo..."); this.currentFileId = id;
+                try {
+                    const data = await GoogleAPI.getFile(id);
+                    UI.fillFormData(data); UI.setProjectTitle(data['campo_nome']);
+                    UI.showScreen('editorScreen'); this.calcLucro(); UI.showToast("Carregado!");
+                } catch (e) { UI.showToast("Erro ao abrir.", "error"); }
+                UI.setLoading(false);
+            },
+
+            async deleteFile(id) {
+                UI.setLoading(true, "Excluindo...");
+                try { await GoogleAPI.deleteFile(id); UI.showToast("Projeto excluído!"); await this.refreshDashboard(); }
+                catch (e) { UI.showToast("Erro ao excluir.", "error"); }
+                UI.setLoading(false);
+            },
+
+            calcLucro() {
+                const f = parseFloat(document.getElementById('campo_faturamento').value) || 0;
+                const c = parseFloat(document.getElementById('campo_custos').value) || 0;
+                document.getElementById('campo_lucro').value = (f - c).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            },
+
+            exportPDF() {
+                const el = document.getElementById('content-area');
+                const name = document.getElementById('campo_nome')?.value || 'UNIARA';
+                const clone = el.cloneNode(true);
+                clone.style.padding = '40px'; clone.style.background = 'white';
+                const header = document.createElement('div');
+                header.innerHTML = `<div style="text-align: center; border-bottom: 2px solid #1e3a5f; margin-bottom: 30px; padding-bottom: 10px; font-family: sans-serif;">
+                    <h1 style="color: #1e3a5f; margin: 0; font-size: 24px;">PLANO DE NEGÓCIOS</h1><p style="color: #666; margin: 5px 0 0 0;">UNIARA</p>
+                    <h2 style="color: #333; margin: 15px 0 0 0;">${name}</h2></div>`;
+                clone.prepend(header);
+                clone.querySelectorAll('.form-section').forEach(s => {
+                    s.style.display = 'block'; s.style.marginBottom = '30px'; s.style.pageBreakInside = 'avoid'; s.style.boxShadow = 'none';
+                    s.querySelectorAll('.guide-box').forEach(g => g.remove());
+                    s.querySelectorAll('input, textarea').forEach(input => {
+                        const val = input.value || '(Não informado)'; const label = input.previousElementSibling?.innerText || '';
+                        const p = document.createElement('div'); p.style.marginBottom = '15px'; p.style.fontFamily = 'sans-serif';
+                        p.innerHTML = `<div style="font-weight: bold; color: #1e3a5f; font-size: 12px; text-transform: uppercase;">${label}</div>
+                            <div style="padding: 10px; border-left: 2px solid #ddd; background: #fafafa; white-space: pre-wrap;">${val}</div>`;
+                        input.parentNode.replaceChild(p, input);
+                    });
+                });
+                UI.setLoading(true, "Gerando PDF...");
+                html2pdf().set({ margin: 15, filename: `Plano_${name}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } })
+                    .from(clone).save().then(() => { UI.setLoading(false); UI.showToast("PDF Gerado!"); })
+                    .catch(err => { UI.setLoading(false); UI.showToast("Erro no PDF.", "error"); });
+            }
+        };
+
+        // Iniciar
+        App.init();
+    </script>
 </body>
 </html>
