@@ -1101,7 +1101,7 @@ async function loadPlans() {
     $('st-equipes').textContent = new Set(allPlans.map(p=>p.inviteCode)).size;
     const progs = allPlans.map(p => calcProg(p));
     $('st-progresso').textContent = progs.length ? Math.round(progs.reduce((a,b)=>a+b,0)/progs.length)+'%' : '0%';
-    $('dash-greet').textContent = `Olá, ${(u.displayName||'').split(' ')[0]||'Estudante'}!`.replace('Olá,','Olá,');
+     $('dash-greet').textContent = `Olá, ${(user.displayName||'').split(' ')[0]||'Estudante'}!`;
   } catch(e) { console.error(e); g.innerHTML='<div class="empty-plans"><div class="ico">⚠️</div><p>Erro ao carregar planos. Configure as credenciais do Firebase.</p></div>'; }
 }
 
@@ -1659,7 +1659,7 @@ function renderTeams(data) {
     const secs = [p.f_missao,p.f_publico,p.f_problema,p.f_forcas,p.f_bmc_vp,p.f_4p_produto,p.f_processos,p.f_fat_base].filter(Boolean).length;
     return `<tr>
       <td><b style="font-size:.9rem">${p.nome||'—'}</b><br><span style="font-size:.72rem;color:var(--text-3)">${p.f_segmento||p.f_local||'—'}</span></td>
-      <td>${p.tipo==='academico'?'📚':'p.tipo==="executivo"?💼':'🚀'} <span style="font-size:.8rem">${p.tipo||'acadêmico'}</span></td>
+      <td>${p.tipo==='academico'?'📚':p.tipo==='executivo'?'💼':'🚀'} <span style="font-size:.8rem">${p.tipo||'acadêmico'}</span></td>
       <td style="font-size:.78rem;max-width:160px;overflow:hidden;text-overflow:ellipsis">${membros}</td>
       <td><div style="display:flex;align-items:center;gap:.5rem"><div style="flex:1;height:6px;background:var(--border2);border-radius:3px;overflow:hidden"><div style="height:100%;background:var(--blue-2);width:${prog}%;border-radius:3px"></div></div><span style="font-size:.72rem;color:var(--text-3);white-space:nowrap">${prog}%</span></div></td>
       <td><span style="font-size:.78rem">${secs}/8 seções</span></td>
